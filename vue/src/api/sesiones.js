@@ -1,0 +1,10 @@
+import api from './index'
+
+export const getSesiones      = (params)      => api.get('/sesiones', { params })
+export const getSesion        = (id)           => api.get(`/sesiones/${id}`)
+export const crearSesion      = (data)         => api.post('/sesiones', data)
+export const editarSesion     = (id, data)     => api.put(`/sesiones/${id}`, data)
+export const borrarSesion     = (id)           => api.delete(`/sesiones/${id}`)
+export const toggleObjetivo   = (sid, oid)     => api.post(`/sesiones/${sid}/objetivo/${oid}`)
+export const getInfoPaciente  = (id)           => api.get(`/sesiones/paciente/${id}`)
+export const getMateriales    = ()             => api.get('/sesiones/materiales')
