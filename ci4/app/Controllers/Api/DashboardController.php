@@ -20,12 +20,14 @@ class DashboardController extends BaseApiController
         $hoy = date('Y-m-d');
         $mes = date('Y-m');
 
+        $sesionesHoy = $sesionModel->listar(null, $hoy);
+
         return $this->ok([
             'total_pacientes'   => $pacienteModel->where('activo', 1)->where('deleted_at IS NULL')->countAllResults(),
-            'citas_hoy'         => count($citaModel->listar($hoy)),
+            'citas_hoy'         => count($sesionesHoy),
             'sesiones_este_mes' => $sesionModel->totalMes($mes),
             'ingresos_este_mes' => (float)$sesionModel->ingresosMes($mes),
-            'proximas_citas'    => $citaModel->listar($hoy),
+            'proximas_citas'    => $sesionesHoy,
             'ultimas_sesiones'  => array_slice($sesionModel->listar(), 0, 5),
         ]);
     }

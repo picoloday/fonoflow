@@ -38,8 +38,9 @@ class SesionesController extends BaseApiController
                 $porMes[$mes] = ['sesiones' => [], 'ingresos' => 0.0];
             }
             $porMes[$mes]['sesiones'][] = $s;
-            $porMes[$mes]['ingresos']  += (float)$s['precio'];
-            $totalIngresos             += (float)$s['precio'];
+            $ingreso = $s['estado'] === 'completada' ? (float)$s['precio'] : 0.0;
+            $porMes[$mes]['ingresos']  += $ingreso;
+            $totalIngresos             += $ingreso;
         }
         krsort($porMes);
 
@@ -69,7 +70,34 @@ class SesionesController extends BaseApiController
             return $this->validationError($this->validator->getErrors());
         }
 
+        // Verificar solapamiento horario (excluye sesiones canceladas)
+        if (!empty($data['hora_inicio'])) {
+            $hora = substr($data['hora_inicio'], 0, 5); // normalizar a HH:MM
+            $conflicto = $this->db->table('sesiones')
+                ->where('fecha', $data['fecha'])
+                ->like('hora_inicio', $hora, 'after')
+                ->whereIn('estado', ['programada', 'completada'])
+                ->where('deleted_at IS NULL')
+                ->countAllResults();
+            if ($conflicto > 0) {
+                return $this->fail('Ya hay una sesión programada en esa franja horaria', 409);
+            }
+        }
+
         $id = $this->model->crear($data);
+
+        // Si el paciente tenía sesiones canceladas pendientes de reprogramar,
+        // marcarlas como 'reprogramada' ahora que se ha creado la nueva.
+        if (!empty($data['paciente_id'])) {
+            $this->db->table('sesiones')
+                ->where('paciente_id', (int) $data['paciente_id'])
+                ->where('estado', 'cancelada')
+                ->where('reprogramar', 1)
+                ->where('id !=', $id)
+                ->where('deleted_at IS NULL')
+                ->update(['estado' => 'reprogramada', 'reprogramar' => 0, 'sesion_reprogramada_id' => $id, 'precio' => 0]);
+        }
+
         return $this->created($this->model->obtener($id));
     }
 
@@ -92,6 +120,44 @@ class SesionesController extends BaseApiController
         if (!$this->model->obtener($id)) return $this->notFound('Sesión no encontrada');
         $this->model->eliminar($id);
         return $this->noContent();
+    }
+
+    public function completar(int $id)
+    {
+        $sesion = $this->model->obtener($id);
+        if (!$sesion) return $this->notFound('Sesión no encontrada');
+
+        if ($sesion['estado'] !== 'programada') {
+            return $this->fail('La sesión ya fue completada o cancelada', 409);
+        }
+
+        $json    = $this->request->getJSON(true) ?? [];
+        $asistio = $json['asistio'] ?? null;
+
+        if ($asistio === null) {
+            return $this->validationError(['asistio' => 'El campo asistio es obligatorio']);
+        }
+
+        if ($asistio) {
+            $data = [
+                'estado'        => 'completada',
+                'asistio'       => 1,
+                'evolutivo'     => $json['evolutivo']     ?? null,
+                'observaciones' => $json['observaciones'] ?? null,
+            ];
+        } else {
+            $reprogramar = empty($json['reprogramar']) ? 0 : 1;
+            $data = [
+                'estado'          => 'cancelada',
+                'asistio'         => 0,
+                'motivo_ausencia' => $json['motivo_ausencia'] ?? null,
+                'reprogramar'     => $reprogramar,
+                'precio'          => $reprogramar ? $sesion['precio'] : 0,
+            ];
+        }
+
+        $this->model->actualizar($id, $data);
+        return $this->ok($this->model->obtener($id), 'Sesión actualizada');
     }
 
     public function toggleObjetivo(int $sesionId, int $objetivoId)
@@ -135,7 +201,29 @@ class SesionesController extends BaseApiController
 
     public function materiales()
     {
-        return $this->ok($this->model->getMaterialesUnicos());
+        $catalogo = array_column(
+            $this->db->table('cat_materiales')->where('activo', 1)->orderBy('nombre')->get()->getResultArray(),
+            'nombre'
+        );
+        $enUso    = $this->model->getMaterialesUnicos();
+        $lista    = array_unique(array_merge($catalogo, $enUso));
+        sort($lista);
+        return $this->ok($lista);
+    }
+
+    public function actividades()
+    {
+        $catalogo = array_column(
+            $this->db->table('cat_actividades')->where('activo', 1)->orderBy('nombre')->get()->getResultArray(),
+            'nombre'
+        );
+        $enUso    = array_column(
+            $this->db->table('sesion_actividades')->select('actividad')->groupBy('actividad')->orderBy('actividad')->get()->getResultArray(),
+            'actividad'
+        );
+        $lista    = array_unique(array_merge($catalogo, $enUso));
+        sort($lista);
+        return $this->ok($lista);
     }
 
     // -------------------------------------------------------

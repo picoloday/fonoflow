@@ -26,17 +26,19 @@ const agenda = computed(() => store.agenda)
 const diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 
 const estadoColor = {
-  programada: 'border-l-4 border-teal-500 bg-teal-50',
-  completada:  'border-l-4 border-green-500 bg-green-50',
-  cancelada:   'border-l-4 border-red-400 bg-red-50',
-  no_asistio:  'border-l-4 border-gray-400 bg-gray-50',
+  programada:   'border-l-4 border-teal-500 bg-teal-50',
+  completada:   'border-l-4 border-green-500 bg-green-50',
+  cancelada:    'border-l-4 border-red-400 bg-red-50',
+  reprogramada: 'border-l-4 border-amber-400 bg-amber-50',
+  no_asistio:   'border-l-4 border-gray-400 bg-gray-50',
 }
 
 const estadoBadge = {
-  programada: 'bg-teal-100 text-teal-700',
-  completada:  'bg-green-100 text-green-700',
-  cancelada:   'bg-red-100 text-red-700',
-  no_asistio:  'bg-gray-100 text-gray-600',
+  programada:   'bg-teal-100 text-teal-700',
+  completada:   'bg-green-100 text-green-700',
+  cancelada:    'bg-red-100 text-red-700',
+  reprogramada: 'bg-amber-100 text-amber-700',
+  no_asistio:   'bg-gray-100 text-gray-600',
 }
 
 function prevMes() {
@@ -103,13 +105,13 @@ const mesNombre = computed(() => {
 
         <!-- Botón nueva cita -->
         <RouterLink
-          :to="`/citas/nueva?fecha=${fecha}`"
+          :to="`/sesiones/nueva?fecha=${fecha}`"
           class="mt-4 w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-teal-600 text-white text-sm rounded-lg hover:bg-teal-700 transition-colors"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
           </svg>
-          Nueva cita
+          Nueva sesión
         </RouterLink>
       </div>
 
@@ -135,9 +137,9 @@ const mesNombre = computed(() => {
             <!-- Slot libre -->
             <RouterLink
               v-if="!cita"
-              :to="`/citas/nueva?fecha=${fecha}&hora=${hora}`"
+              :to="`/sesiones/nueva?fecha=${fecha}&hora=${hora}`"
               class="flex-1 border-2 border-dashed border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-400 hover:border-teal-400 hover:text-teal-500 transition-colors"
-            >+ Nueva cita</RouterLink>
+            >+ Nueva sesión</RouterLink>
             <!-- Cita -->
             <RouterLink
               v-else
@@ -151,6 +153,7 @@ const mesNombre = computed(() => {
                   {{ cita.estado }}
                 </span>
               </div>
+              <p v-if="cita.patologias" class="text-xs text-teal-600 mt-0.5 truncate">{{ cita.patologias }}</p>
               <p class="text-xs text-gray-500 mt-0.5">{{ cita.duracion }} min</p>
             </RouterLink>
           </div>

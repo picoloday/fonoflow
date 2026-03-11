@@ -23,9 +23,11 @@ class CitaModel extends Model
     // -------------------------------------------------------
     public function listar(?string $fecha = null, ?int $pacienteId = null): array
     {
-        $q = $this->select('citas.*, pacientes.nombre AS paciente_nombre')
+        $q = $this->select('citas.*, pacientes.nombre AS paciente_nombre, GROUP_CONCAT(pp.patologia SEPARATOR \', \') AS patologias', false)
                   ->join('pacientes', 'pacientes.id = citas.paciente_id')
+                  ->join('paciente_patologias pp', 'pp.paciente_id = pacientes.id', 'left')
                   ->where('citas.deleted_at IS NULL')
+                  ->groupBy('citas.id')
                   ->orderBy('citas.fecha', 'ASC')
                   ->orderBy('citas.hora_inicio', 'ASC');
 

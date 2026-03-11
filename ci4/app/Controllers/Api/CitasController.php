@@ -87,11 +87,14 @@ class CitasController extends BaseApiController
             $slots[$hora] = $citaSlot;
         }
 
-        // Sesiones sin cita vinculada
+        // Sesiones programadas directamente (sin cita vinculada)
         foreach ($sesionModel->listarDia($fecha) as $s) {
-            $hora = $s['hora_inicio'];
-            if (!isset($slots[$hora])) {
-                $slots[$hora] = array_merge($s, ['_tipo' => 'sesion', 'estado' => 'realizada']);
+            $hora = substr($s['hora_inicio'], 0, 5); // normalizar "HH:MM:SS" → "HH:MM"
+            $item = array_merge($s, ['_tipo' => 'sesion']);
+            if (isset($slots[$hora]) && $slots[$hora] === null) {
+                $slots[$hora] = $item;   // ocupa el slot libre
+            } elseif (!isset($slots[$hora])) {
+                $slots[$hora] = $item;   // hora fuera del rango estándar
             }
         }
         ksort($slots);
@@ -179,7 +182,7 @@ class CitasController extends BaseApiController
                 'precio'      => $citaActualizada['precio'],
                 'objetivos'   => array_map(fn($o) => ['objetivo' => $o, 'cumplido' => 0], $citaActualizada['objetivos']),
                 'materiales'  => $citaActualizada['materiales'],
-                'actividades' => [],
+                'actividades' => $citaActualizada['actividades'],
             ]);
         }
 

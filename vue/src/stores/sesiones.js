@@ -35,5 +35,11 @@ export const useSesionesStore = defineStore('sesiones', () => {
     return data.data
   }
 
-  return { lista, actual, loading, cargar, cargarUna, crear, editar, toggleObjetivo }
+  async function completar(id, datos) {
+    const { data } = await api.completarSesion(id, datos)
+    actual.value = data.data
+    return data.data
+  }
+
+  return { lista, actual, loading, cargar, cargarUna, crear, editar, toggleObjetivo, completar }
 })

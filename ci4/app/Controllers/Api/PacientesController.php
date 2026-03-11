@@ -90,9 +90,13 @@ class PacientesController extends BaseApiController
 
     public function patologias()
     {
-        $defecto = AppConfig::$patologias;
-        $db      = $this->model->getPatologiasUnicas();
-        $lista   = array_unique(array_merge($defecto, $db));
+        // Combina catálogo maestro + patologías ya usadas en pacientes
+        $catalogo  = array_column(
+            $this->db->table('cat_patologias')->where('activo', 1)->orderBy('nombre')->get()->getResultArray(),
+            'nombre'
+        );
+        $enUso     = $this->model->getPatologiasUnicas();
+        $lista     = array_unique(array_merge($catalogo, $enUso));
         sort($lista);
         return $this->ok($lista);
     }
@@ -114,6 +118,7 @@ class PacientesController extends BaseApiController
         return [
             'nombre'              => $json['nombre'] ?? null,
             'tutor'               => $json['tutor'] ?? null,
+            'parentesco'          => $json['parentesco'] ?? null,
             'telefono'            => $json['telefono'] ?? null,
             'email'               => $json['email'] ?? null,
             'fecha_nacimiento'    => $json['fecha_nacimiento'] ?? null,

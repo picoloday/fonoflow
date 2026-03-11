@@ -11,7 +11,7 @@ class PacienteModel extends Model
     protected $useTimestamps = true;
     protected $useSoftDeletes = false;
     protected $allowedFields = [
-        'nombre', 'tutor', 'telefono', 'email',
+        'nombre', 'tutor', 'parentesco', 'telefono', 'email',
         'fecha_nacimiento', 'foto', 'notas', 'activo', 'fecha_alta',
     ];
 

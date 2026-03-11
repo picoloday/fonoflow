@@ -32,10 +32,14 @@ function logout() {
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-14">
 
-          <!-- Logo -->
-          <RouterLink to="/" class="flex items-center gap-2 font-bold text-teal-600 text-lg">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+          <!-- Logo: burbuja de voz con onda sonora — logopedia -->
+          <RouterLink to="/" class="flex items-center gap-2 font-bold text-teal-600 text-lg tracking-tight">
+            <svg class="w-7 h-7" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="28" height="28" rx="7" fill="#0d9488"/>
+              <path d="M4 8.5A2.5 2.5 0 016.5 6h15A2.5 2.5 0 0124 8.5v8a2.5 2.5 0 01-2.5 2.5H17l-3 2.5-3-2.5H6.5A2.5 2.5 0 014 16.5v-8z" fill="white"/>
+              <rect x="9" y="11.5" width="1.8" height="3.5" rx="0.9" fill="#0d9488"/>
+              <rect x="13" y="9.5" width="1.8" height="7.5" rx="0.9" fill="#0d9488"/>
+              <rect x="17" y="11.5" width="1.8" height="3.5" rx="0.9" fill="#0d9488"/>
             </svg>
             FonoFlow
           </RouterLink>

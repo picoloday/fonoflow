@@ -3,7 +3,9 @@
 namespace App\Controllers\Api;
 
 use CodeIgniter\Controller;
+use CodeIgniter\Database\BaseConnection;
 use CodeIgniter\HTTP\ResponseInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * Base para todos los API controllers.
@@ -11,6 +13,16 @@ use CodeIgniter\HTTP\ResponseInterface;
  */
 abstract class BaseApiController extends Controller
 {
+    protected BaseConnection $db;
+
+    public function initController(
+        \CodeIgniter\HTTP\RequestInterface $request,
+        ResponseInterface $response,
+        LoggerInterface $logger
+    ): void {
+        parent::initController($request, $response, $logger);
+        $this->db = \Config\Database::connect();
+    }
     protected function ok($data, string $message = ''): ResponseInterface
     {
         return $this->response->setStatusCode(200)->setJSON([

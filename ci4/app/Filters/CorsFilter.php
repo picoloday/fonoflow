@@ -20,14 +20,14 @@ class CorsFilter implements FilterInterface
         $headers = 'Content-Type, Authorization, X-Requested-With';
         $methods = 'GET, POST, PUT, PATCH, DELETE, OPTIONS';
 
-        header("Access-Control-Allow-Origin: {$origin}");
-        header("Access-Control-Allow-Headers: {$headers}");
-        header("Access-Control-Allow-Methods: {$methods}");
-        header('Access-Control-Allow-Credentials: true');
+        $response = service('response');
+        $response->setHeader('Access-Control-Allow-Origin', $origin);
+        $response->setHeader('Access-Control-Allow-Headers', $headers);
+        $response->setHeader('Access-Control-Allow-Methods', $methods);
+        $response->setHeader('Access-Control-Allow-Credentials', 'true');
 
-        // Peticiones preflight OPTIONS → responder sin ejecutar el controlador
-        if ($request->getMethod() === 'options') {
-            $response = service('response');
+        // Peticiones preflight OPTIONS → responder directamente
+        if (strtoupper($request->getMethod()) === 'OPTIONS') {
             return $response->setStatusCode(204);
         }
 
@@ -37,6 +37,7 @@ class CorsFilter implements FilterInterface
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
     {
         $origin = env('cors.origin', 'http://localhost:5173');
+
         return $response
             ->setHeader('Access-Control-Allow-Origin', $origin)
             ->setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')

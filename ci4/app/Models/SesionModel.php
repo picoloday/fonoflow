@@ -12,6 +12,7 @@ class SesionModel extends Model
     protected $allowedFields = [
         'paciente_id', 'cita_id', 'fecha', 'hora_inicio', 'duracion',
         'precio', 'evolutivo', 'observaciones',
+        'estado', 'asistio', 'motivo_ausencia', 'reprogramar', 'sesion_reprogramada_id',
     ];
 
     // -------------------------------------------------------
@@ -30,6 +31,8 @@ class SesionModel extends Model
         $sesiones = $q->findAll();
 
         foreach ($sesiones as &$s) {
+            $s['reprogramar'] = (int) $s['reprogramar'];
+            $s['asistio']     = isset($s['asistio']) ? (int) $s['asistio'] : null;
             $s['objetivos']   = $this->getObjetivos($s['id']);
             $s['actividades'] = $this->getActividades($s['id']);
             $s['materiales']  = $this->getMateriales($s['id']);
@@ -43,12 +46,14 @@ class SesionModel extends Model
     // -------------------------------------------------------
     public function listarDia(string $fecha): array
     {
-        return $this->select('sesiones.*, pacientes.nombre AS paciente_nombre')
+        return $this->select('sesiones.*, pacientes.nombre AS paciente_nombre, GROUP_CONCAT(pp.patologia SEPARATOR \', \') AS patologias', false)
                     ->join('pacientes', 'pacientes.id = sesiones.paciente_id')
+                    ->join('paciente_patologias pp', 'pp.paciente_id = pacientes.id', 'left')
                     ->where('sesiones.fecha', $fecha)
                     ->where('sesiones.cita_id IS NULL')
                     ->where('sesiones.hora_inicio IS NOT NULL')
                     ->where('sesiones.deleted_at IS NULL')
+                    ->groupBy('sesiones.id')
                     ->orderBy('sesiones.hora_inicio', 'ASC')
                     ->findAll();
     }
@@ -72,7 +77,7 @@ class SesionModel extends Model
 
         $porDia = [];
         foreach ($rows as $r) {
-            $porDia[$r['fecha']][] = array_merge($r, ['estado' => 'realizada', '_tipo' => 'sesion']);
+            $porDia[$r['fecha']][] = array_merge($r, ['_tipo' => 'sesion']);
         }
         return $porDia;
     }
@@ -90,9 +95,24 @@ class SesionModel extends Model
 
         if (!$sesion) return null;
 
+        // MySQL devuelve TINYINT como string; castear para que JS no confunda "0" con true
+        $sesion['asistio']     = isset($sesion['asistio'])     ? (int) $sesion['asistio']     : null;
+        $sesion['reprogramar'] = isset($sesion['reprogramar']) ? (int) $sesion['reprogramar'] : 0;
+
         $sesion['objetivos']   = $this->getObjetivos($id);
         $sesion['actividades'] = $this->getActividades($id);
         $sesion['materiales']  = $this->getMateriales($id);
+
+        // Si está reprogramada, obtener info de la nueva sesión
+        if (!empty($sesion['sesion_reprogramada_id'])) {
+            $nueva = $this->db->table('sesiones')
+                              ->select('id, fecha, hora_inicio, estado')
+                              ->where('id', (int) $sesion['sesion_reprogramada_id'])
+                              ->get()->getRowArray();
+            $sesion['sesion_reprogramada'] = $nueva ?: null;
+        } else {
+            $sesion['sesion_reprogramada'] = null;
+        }
 
         return $sesion;
     }
@@ -239,10 +259,17 @@ class SesionModel extends Model
     // -------------------------------------------------------
     public function getObjetivos(int $sesionId): array
     {
-        return $this->db->table('sesion_objetivos')
-                        ->where('sesion_id', $sesionId)
-                        ->orderBy('orden', 'ASC')
-                        ->get()->getResultArray();
+        $rows = $this->db->table('sesion_objetivos')
+                         ->where('sesion_id', $sesionId)
+                         ->orderBy('orden', 'ASC')
+                         ->get()->getResultArray();
+        // MySQL devuelve TINYINT como string; castear a int para que JS no los
+        // confunda ("0" es truthy en JavaScript)
+        return array_map(function ($r) {
+            $r['cumplido'] = (int) $r['cumplido'];
+            $r['orden']    = (int) $r['orden'];
+            return $r;
+        }, $rows);
     }
 
     public function getActividades(int $sesionId): array

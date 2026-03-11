@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php spark:*)",
+      "Bash(/c/laragon/bin/php/php-8.3.30-Win32-vs16-x64/php.exe spark:*)",
+      "Bash(curl -v -X OPTIONS \"http://fonoflow.test/api/v1/auth/login\" -H \"Origin: http://localhost:5173\" -H \"Access-Control-Request-Method: POST\" -H \"Access-Control-Request-Headers: Content-Type\")",
+      "Bash(curl -si -X OPTIONS \"http://fonoflow.test/api/v1/auth/login\" -H \"Origin: http://localhost:5173\" -H \"Access-Control-Request-Method: POST\" -H \"Access-Control-Request-Headers: Content-Type\")",
+      "Bash(/c/laragon/bin/git/cmd/curl.exe -si -X OPTIONS \"http://fonoflow.test/api/v1/auth/login\" -H \"Origin: http://localhost:5173\" -H \"Access-Control-Request-Method: POST\" -H \"Access-Control-Request-Headers: Content-Type\")",
+      "Bash(/c/Windows/System32/curl.exe -si -X OPTIONS \"http://fonoflow.test/api/v1/auth/login\" -H \"Origin: http://localhost:5173\" -H \"Access-Control-Request-Method: POST\" -H \"Access-Control-Request-Headers: Content-Type\")",
+      "Bash(/c/Windows/System32/curl.exe -si -X OPTIONS \"http://127.0.0.1/api/v1/auth/login\" -H \"Host: fonoflow.test\" -H \"Origin: http://localhost:5173\" -H \"Access-Control-Request-Method: POST\" -H \"Access-Control-Request-Headers: Content-Type\")",
+      "Bash(/c/Windows/System32/curl.exe -si --resolve \"fonoflow.test:80:127.0.0.1\" -X OPTIONS \"http://fonoflow.test/api/v1/auth/login\" -H \"Origin: http://localhost:5173\" -H \"Access-Control-Request-Method: POST\" -H \"Access-Control-Request-Headers: Content-Type\")",
+      "Bash(/c/Windows/System32/netstat.exe -an)",
+      "Bash(find /c/laragon/www/fonoflow/vue/src -name *.js -o -name *.ts)",
+      "Bash(/c/laragon/www/fonoflow/vue/index.html:*)",
+      "Bash(node -e \":*)",
+      "Bash(\"C:/laragon/bin/php/php-8.3.30-Win32-vs16-x64/php.exe\" spark:*)"
+    ]
+  }
+}

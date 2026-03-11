@@ -56,8 +56,8 @@ $routes->get('sesiones/paciente/(:num)',        'Sesiones::infoPaciente/$1');   
 // API v1 — REST JSON
 // -------------------------------------------------------
 // Auth pública (sin JWT)
-$routes->post('api/v1/auth/login',   'App\Controllers\Api\AuthController::login');
-$routes->post('api/v1/auth/refresh', 'App\Controllers\Api\AuthController::refresh', ['filter' => 'jwt']);
+$routes->post('api/v1/auth/login',   '\App\Controllers\Api\AuthController::login');
+$routes->post('api/v1/auth/refresh', '\App\Controllers\Api\AuthController::refresh', ['filter' => 'jwt']);
 
 // API v1 — rutas protegidas por JWT
 $routes->group('api/v1', ['namespace' => 'App\Controllers\Api', 'filter' => 'jwt'], function ($routes) {
@@ -86,11 +86,18 @@ $routes->group('api/v1', ['namespace' => 'App\Controllers\Api', 'filter' => 'jwt
 
     // Sesiones
     $routes->get('sesiones/materiales',             'SesionesController::materiales');
+    $routes->get('sesiones/actividades',            'SesionesController::actividades');
     $routes->get('sesiones/paciente/(:num)',        'SesionesController::infoPaciente/$1');
     $routes->get('sesiones',                        'SesionesController::index');
     $routes->post('sesiones',                       'SesionesController::create');
     $routes->get('sesiones/(:num)',                 'SesionesController::show/$1');
     $routes->put('sesiones/(:num)',                 'SesionesController::update/$1');
     $routes->delete('sesiones/(:num)',              'SesionesController::delete/$1');
+    $routes->post('sesiones/(:num)/completar',      'SesionesController::completar/$1');
     $routes->post('sesiones/(:num)/objetivo/(:num)','SesionesController::toggleObjetivo/$1/$2');
+
+    // Catálogos (listas maestras ampliables)
+    $routes->get('catalogo/(:segment)',             'CatalogoController::index/$1');
+    $routes->post('catalogo/(:segment)',            'CatalogoController::create/$1');
+    $routes->delete('catalogo/(:segment)/(:num)',   'CatalogoController::delete/$1/$2');
 });

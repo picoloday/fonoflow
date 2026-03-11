@@ -51,16 +51,36 @@ const nombreMes = (ym) => {
           </span>
         </div>
         <ul class="divide-y divide-gray-100">
-          <li v-for="s in store.lista.por_mes[mes].sesiones" :key="s.id">
-            <RouterLink :to="`/sesiones/${s.id}`" class="flex items-center gap-3 px-5 py-3 hover:bg-gray-50">
+          <li v-for="s in store.lista.por_mes[mes].sesiones" :key="s.id" class="flex items-stretch">
+            <RouterLink :to="`/sesiones/${s.id}`" class="flex flex-1 items-center gap-3 px-5 py-3 hover:bg-gray-50 min-w-0">
               <div class="flex-1 min-w-0">
                 <p class="text-sm font-medium text-gray-900 truncate">{{ s.paciente_nombre }}</p>
-                <p class="text-xs text-gray-400">{{ s.fecha }} {{ s.hora_inicio ? '· ' + s.hora_inicio : '' }}</p>
+                <p class="text-xs text-gray-400">{{ s.fecha }} {{ s.hora_inicio ? '· ' + s.hora_inicio.slice(0,5) : '' }}</p>
               </div>
-              <span class="text-sm font-medium text-teal-600">{{ Number(s.precio).toFixed(2) }}€</span>
-              <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <span class="text-xs px-2 py-0.5 rounded-full font-medium shrink-0"
+                :class="{
+                  'bg-teal-100 text-teal-700':   s.estado === 'programada',
+                  'bg-green-100 text-green-700':  s.estado === 'completada',
+                  'bg-red-100 text-red-700':      s.estado === 'cancelada',
+                  'bg-amber-100 text-amber-700':  s.estado === 'reprogramada',
+                  'bg-gray-100 text-gray-600':    !['programada','completada','cancelada','reprogramada'].includes(s.estado),
+                }">
+                {{ s.estado }}
+              </span>
+              <span class="text-sm font-medium text-teal-600 shrink-0">{{ Number(s.precio).toFixed(2) }}€</span>
+              <svg class="w-4 h-4 text-gray-300 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
               </svg>
+            </RouterLink>
+            <!-- Botón reprogramar: solo en canceladas pendientes -->
+            <RouterLink v-if="s.estado === 'cancelada' && s.reprogramar"
+              :to="`/sesiones/nueva?paciente=${s.paciente_id}`"
+              class="flex items-center gap-1 px-3 border-l border-amber-200 bg-amber-50 text-amber-700 text-xs font-medium hover:bg-amber-100 transition-colors shrink-0"
+              title="Crear nueva sesión (reprogramar)">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+              Reprogramar
             </RouterLink>
           </li>
         </ul>
