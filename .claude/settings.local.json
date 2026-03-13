@@ -13,7 +13,12 @@
       "Bash(find /c/laragon/www/fonoflow/vue/src -name *.js -o -name *.ts)",
       "Bash(/c/laragon/www/fonoflow/vue/index.html:*)",
       "Bash(node -e \":*)",
-      "Bash(\"C:/laragon/bin/php/php-8.3.30-Win32-vs16-x64/php.exe\" spark:*)"
+      "Bash(\"C:/laragon/bin/php/php-8.3.30-Win32-vs16-x64/php.exe\" spark:*)",
+      "Bash(ls c:/laragon/www/fonoflow/vue/.env*)",
+      "Bash(grep -r \"login\\\\|token\\\\|auth\" c:/laragon/www/fonoflow/vue/src/stores/ --include=*.js --include=*.ts -l)",
+      "Bash(grep -r \"login\\\\|token\\\\|auth\" c:/laragon/www/fonoflow/vue/src/ --include=*.js --include=*.vue -l)",
+      "Bash(xargs grep:*)",
+      "Bash(node generate-icons.mjs)"
     ]
   }
 }

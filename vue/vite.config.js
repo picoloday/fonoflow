@@ -29,7 +29,7 @@ export default defineConfig({
       workbox: {
         runtimeCaching: [
           {
-            urlPattern: /^https?:\/\/fonoflow\.test\/api\/v1\/.*/,
+            urlPattern: /\/api\/v1\/.*/,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'api-cache',

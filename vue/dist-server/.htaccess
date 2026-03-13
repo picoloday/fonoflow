@@ -1,0 +1,13 @@
+Options -MultiViews
+RewriteEngine On
+
+# 1. Primero: rutas /api/* → gateway CI4
+RewriteRule ^api/ api/index.php [L,QSA]
+
+# 2. Archivos y directorios estáticos reales → servir tal cual
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# 3. Todo lo demás → SPA Vue (index.html)
+RewriteRule ^ index.html [L]
