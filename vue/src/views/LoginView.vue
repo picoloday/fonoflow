@@ -31,8 +31,11 @@ async function submit() {
       <!-- Logo -->
       <div class="text-center mb-8">
         <div class="inline-flex items-center justify-center w-16 h-16 bg-teal-600 rounded-2xl mb-4">
-          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+          <svg class="w-10 h-10" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 8.5A2.5 2.5 0 016.5 6h15A2.5 2.5 0 0124 8.5v8a2.5 2.5 0 01-2.5 2.5H17l-3 2.5-3-2.5H6.5A2.5 2.5 0 014 16.5v-8z" fill="white"/>
+            <rect x="9" y="11.5" width="1.8" height="3.5" rx="0.9" fill="#0d9488"/>
+            <rect x="13" y="9.5" width="1.8" height="7.5" rx="0.9" fill="#0d9488"/>
+            <rect x="17" y="11.5" width="1.8" height="3.5" rx="0.9" fill="#0d9488"/>
           </svg>
         </div>
         <h1 class="text-2xl font-bold text-gray-900">FonoFlow</h1>
