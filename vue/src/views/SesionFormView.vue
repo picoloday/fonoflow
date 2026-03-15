@@ -32,6 +32,17 @@ const form = ref({
 const error   = ref('')
 const loading = ref(false)
 
+// Genera slots de hora de 15:00 a 20:45 cada 15 min
+const horasDisponibles = (() => {
+  const slots = []
+  for (let h = 15; h < 21; h++) {
+    for (let m = 0; m < 60; m += 15) {
+      slots.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`)
+    }
+  }
+  return slots
+})()
+
 const nuevaMaterial  = ref(''); const addingMat = ref(false); const errorMat = ref('')
 const nuevaActividad = ref(''); const addingAct = ref(false); const errorAct = ref('')
 
@@ -142,8 +153,9 @@ async function guardar() {
       await store.editar(route.params.id, form.value)
       router.push(`/sesiones/${route.params.id}`)
     } else {
-      const nueva = await store.crear(form.value)
-      router.push(`/sesiones/${nueva.id}`)
+      await store.crear(form.value)
+      // Volver a la agenda en la fecha de la sesión creada
+      router.push(`/agenda?fecha=${form.value.fecha}`)
     }
   } catch(e) {
     error.value = e.response?.data?.message || 'Error al guardar'
@@ -216,8 +228,11 @@ async function guardar() {
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Hora</label>
-            <input v-model="form.hora_inicio" type="time" step="1800"
-              class="block w-full border border-gray-300 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"/>
+            <select v-model="form.hora_inicio"
+              class="block w-full border border-gray-300 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+              <option value="">— Hora —</option>
+              <option v-for="h in horasDisponibles" :key="h" :value="h">{{ h }}</option>
+            </select>
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Duración</label>

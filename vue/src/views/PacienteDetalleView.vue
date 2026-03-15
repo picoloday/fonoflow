@@ -1,11 +1,26 @@
 <script setup>
-import { onMounted, computed } from 'vue'
-import { useRoute, RouterLink } from 'vue-router'
+import { onMounted, computed, ref } from 'vue'
+import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { usePacientesStore } from '@/stores/pacientes'
 
-const store = usePacientesStore()
-const route = useRoute()
+const store  = usePacientesStore()
+const route  = useRoute()
+const router = useRouter()
+const confirmandoBorrar = ref(false)
+const borrando          = ref(false)
+
 onMounted(() => store.cargarUno(route.params.id))
+
+async function borrarPaciente() {
+  borrando.value = true
+  try {
+    await store.borrar(store.actual.id)
+    router.push('/pacientes')
+  } finally {
+    borrando.value = false
+    confirmandoBorrar.value = false
+  }
+}
 
 const estadoBadge = {
   programada:   'bg-teal-100 text-teal-700',
@@ -51,6 +66,24 @@ function progreso(sesion) {
           <RouterLink :to="`/pacientes/${store.actual.id}/editar`" class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">
             Editar
           </RouterLink>
+          <!-- Botón borrar con confirmación -->
+          <template v-if="!confirmandoBorrar">
+            <button @click="confirmandoBorrar = true"
+              class="inline-flex items-center px-3 py-1.5 border border-red-300 text-red-600 text-sm rounded-lg hover:bg-red-50 transition-colors">
+              Borrar paciente
+            </button>
+          </template>
+          <template v-else>
+            <span class="text-sm text-red-600 font-medium">¿Confirmar borrado?</span>
+            <button @click="borrarPaciente" :disabled="borrando"
+              class="inline-flex items-center px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 disabled:opacity-60 transition-colors">
+              {{ borrando ? 'Borrando...' : 'Sí, borrar' }}
+            </button>
+            <button @click="confirmandoBorrar = false"
+              class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm rounded-lg hover:bg-gray-50 transition-colors">
+              Cancelar
+            </button>
+          </template>
         </div>
       </div>
 

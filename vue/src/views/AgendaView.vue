@@ -23,6 +23,29 @@ async function cargar() {
 
 const agenda = computed(() => store.agenda)
 
+// Filtra los slots intermedios ocupados por sesiones de más de 15 min.
+// Lo hace el frontend para no depender de caché de PHP.
+const slotsVisibles = computed(() => {
+  const slots = agenda.value?.slots
+  if (!slots) return {}
+
+  // Calcular qué horas están bloqueadas por duración de cada sesión/cita
+  const bloqueadas = new Set()
+  for (const [hora, cita] of Object.entries(slots)) {
+    if (!cita || !cita.paciente_nombre) continue  // nulo o slot fantasma
+    const [h, m] = hora.split(':').map(Number)
+    const inicioMin = h * 60 + m
+    const dur = parseInt(cita.duracion) || 0
+    for (let t = inicioMin + 15; t < inicioMin + dur; t += 15) {
+      bloqueadas.add(`${String(Math.floor(t / 60)).padStart(2,'0')}:${String(t % 60).padStart(2,'0')}`)
+    }
+  }
+
+  return Object.fromEntries(
+    Object.entries(slots).filter(([hora, cita]) => !bloqueadas.has(hora))
+  )
+})
+
 const diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 
 const estadoColor = {
@@ -132,7 +155,7 @@ const mesNombre = computed(() => {
         </div>
 
         <div v-else-if="agenda" class="divide-y divide-gray-100 max-h-[600px] overflow-y-auto">
-          <div v-for="(cita, hora) in agenda.slots" :key="hora" class="flex gap-3 px-5 py-2 items-start">
+          <div v-for="(cita, hora) in slotsVisibles" :key="hora" class="flex gap-3 px-5 py-2 items-start">
             <span class="text-xs text-gray-400 font-mono w-11 pt-1 flex-shrink-0">{{ hora }}</span>
             <!-- Slot libre -->
             <RouterLink
@@ -140,7 +163,7 @@ const mesNombre = computed(() => {
               :to="`/sesiones/nueva?fecha=${fecha}&hora=${hora}`"
               class="flex-1 border-2 border-dashed border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-400 hover:border-teal-400 hover:text-teal-500 transition-colors"
             >+ Nueva sesión</RouterLink>
-            <!-- Cita -->
+            <!-- Cita o sesión -->
             <RouterLink
               v-else
               :to="cita._tipo === 'sesion' ? `/sesiones/${cita.id}` : `/citas/${cita.id}`"

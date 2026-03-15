@@ -16,7 +16,7 @@ class CitaModel extends Model
 
     const HORA_INICIO  = '15:00';
     const HORA_FIN     = '21:00';
-    const INTERVALO    = 30; // minutos
+    const INTERVALO    = 15; // minutos
 
     // -------------------------------------------------------
     // Listar citas (con datos del paciente)

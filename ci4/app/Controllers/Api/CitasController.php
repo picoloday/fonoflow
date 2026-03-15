@@ -73,29 +73,50 @@ class CitasController extends BaseApiController
             }
         }
 
-        // Timeline del día: slots cada 30 min
+        // Timeline del día — aritmética en minutos, sin strtotime
         $citasDia = $this->model->listar($fecha);
+        $sessDia  = $sesionModel->listarDia($fecha);
         $slots    = [];
-        $inicio   = strtotime(CitaModel::HORA_INICIO);
-        $fin      = strtotime(CitaModel::HORA_FIN);
-        for ($t = $inicio; $t < $fin; $t += CitaModel::INTERVALO * 60) {
-            $hora     = date('H:i', $t);
-            $citaSlot = null;
-            foreach ($citasDia as $c) {
-                if ($c['hora_inicio'] === $hora) { $citaSlot = $c; break; }
+
+        $toMin = function(string $hhmm): int {
+            $parts = explode(':', $hhmm);
+            return (int)$parts[0] * 60 + (int)$parts[1];
+        };
+        $toHora = function(int $min): string {
+            return sprintf('%02d:%02d', intdiv($min, 60), $min % 60);
+        };
+
+        $inicioMin = $toMin(CitaModel::HORA_INICIO);
+        $finMin    = $toMin(CitaModel::HORA_FIN);
+
+        // Índice por hora normalizada (HH:MM) → item
+        $itemPorHora = [];
+        foreach ($citasDia as $c) {
+            $h = substr($c['hora_inicio'], 0, 5);
+            $itemPorHora[$h] = $c;
+        }
+        foreach ($sessDia as $s) {
+            $h = substr($s['hora_inicio'], 0, 5);
+            if (!isset($itemPorHora[$h])) {
+                $itemPorHora[$h] = array_merge($s, ['_tipo' => 'sesion']);
             }
-            $slots[$hora] = $citaSlot;
         }
 
-        // Sesiones programadas directamente (sin cita vinculada)
-        foreach ($sesionModel->listarDia($fecha) as $s) {
-            $hora = substr($s['hora_inicio'], 0, 5); // normalizar "HH:MM:SS" → "HH:MM"
-            $item = array_merge($s, ['_tipo' => 'sesion']);
-            if (isset($slots[$hora]) && $slots[$hora] === null) {
-                $slots[$hora] = $item;   // ocupa el slot libre
-            } elseif (!isset($slots[$hora])) {
-                $slots[$hora] = $item;   // hora fuera del rango estándar
+        // Horas bloqueadas por la duración de cada item (slots intermedios)
+        $horasBloqueadas = [];
+        foreach ($itemPorHora as $h => $item) {
+            $start = $toMin($h);
+            $dur   = (int)($item['duracion'] ?? 0);
+            for ($m = $start + CitaModel::INTERVALO; $m < $start + $dur; $m += CitaModel::INTERVALO) {
+                $horasBloqueadas[$toHora($m)] = true;
             }
+        }
+
+        // Generar solo los slots visibles
+        for ($m = $inicioMin; $m < $finMin; $m += CitaModel::INTERVALO) {
+            $hora = $toHora($m);
+            if (isset($horasBloqueadas[$hora])) continue;
+            $slots[$hora] = $itemPorHora[$hora] ?? null;
         }
         ksort($slots);
 
