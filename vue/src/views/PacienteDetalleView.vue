@@ -52,12 +52,13 @@ const estadoBadge = {
 
 const labelEstado = { programada: 'Programada', completada: 'Completada', cancelada: 'No asiste', reprogramada: 'Reprogramada' }
 
-function progreso(sesion) {
-  const objs = sesion.objetivos || []
-  if (!objs.length) return null
-  const cumplidos = objs.filter(o => o.cumplido).length
-  return Math.round((cumplidos / objs.length) * 100)
-}
+// IDs de sesiones que fueron creadas para recuperar otra cancelada
+const idsRecuperacion = computed(() => {
+  const ids = new Set()
+  for (const s of store.actual?.historial || [])
+    if (s.sesion_reprogramada_id) ids.add(Number(s.sesion_reprogramada_id))
+  return ids
+})
 </script>
 
 <template>
@@ -123,14 +124,14 @@ function progreso(sesion) {
             </div>
           </div>
 
-          <!-- Horario habitual + Agendar -->
-          <div v-if="store.actual.hora_sesion" class="border-t border-gray-100 pt-3">
+          <!-- Horario habitual -->
+          <div v-if="store.actual.dias_semana" class="border-t border-gray-100 pt-3">
             <span class="text-xs text-gray-400">Horario habitual</span>
-            <p class="text-sm mt-0.5">
-              {{ ['','Lun','Mar','Mié','Jue','Vie','Sáb'].filter((_,i) => store.actual.dias_semana?.split(',').map(Number).includes(i)).join(', ') }}
-              · {{ store.actual.hora_sesion?.slice(0,5) }}
-              · {{ store.actual.duracion_sesion }} min
-            </p>
+            <div class="mt-1 space-y-0.5">
+              <p v-for="e in JSON.parse(store.actual.dias_semana)" :key="e.dia" class="text-sm">
+                {{ ['','Lun','Mar','Mié','Jue','Vie','Sáb'][e.dia] }} · {{ e.hora }} · {{ e.duracion }} min
+              </p>
+            </div>
           </div>
 
           <!-- Panel agendar mes -->
@@ -139,12 +140,12 @@ function progreso(sesion) {
             <div class="flex gap-2 items-center">
               <input type="month" v-model="mesAgendar"
                 class="flex-1 border border-gray-300 rounded-lg py-1.5 px-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"/>
-              <button @click="agendar" :disabled="agendando || !store.actual.hora_sesion"
+              <button @click="agendar" :disabled="agendando || !store.actual.dias_semana"
                 class="px-3 py-1.5 bg-teal-600 text-white text-xs font-medium rounded-lg hover:bg-teal-700 disabled:opacity-50 transition-colors whitespace-nowrap">
                 {{ agendando ? '...' : 'Agendar' }}
               </button>
             </div>
-            <p v-if="!store.actual.hora_sesion" class="text-xs text-amber-600">
+            <p v-if="!store.actual.dias_semana" class="text-xs text-amber-600">
               Configura el horario habitual editando el paciente.
             </p>
             <!-- Resultado -->
@@ -168,18 +169,27 @@ function progreso(sesion) {
           <div class="px-5 py-3 border-b bg-gray-50"><h2 class="font-semibold text-sm text-gray-700">Historial de sesiones</h2></div>
           <ul class="divide-y divide-gray-100">
             <li v-for="s in store.actual.historial" :key="s.id">
-              <RouterLink :to="`/sesiones/${s.id}`" class="flex items-center gap-3 px-5 py-3 hover:bg-gray-50">
+              <RouterLink :to="`/sesiones/${s.id}`" class="flex items-start gap-3 px-5 py-3 hover:bg-gray-50">
+                <!-- Fecha y hora -->
                 <div class="flex-1 min-w-0">
-                  <p class="text-sm font-medium text-gray-900">{{ s.fecha }}</p>
-                  <div v-if="progreso(s) !== null" class="flex items-center gap-2 mt-1">
-                    <div class="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                      <div class="h-full bg-teal-500 rounded-full" :style="`width:${progreso(s)}%`"></div>
-                    </div>
-                    <span class="text-xs text-gray-400">{{ progreso(s) }}%</span>
+                  <p class="text-sm font-medium text-gray-900">
+                    {{ s.fecha }}<span v-if="s.hora_inicio" class="text-gray-400 font-normal"> · {{ s.hora_inicio.slice(0,5) }}</span>
+                  </p>
+                  <!-- Motivo ausencia -->
+                  <p v-if="s.motivo_ausencia" class="text-xs text-red-500 mt-0.5">{{ s.motivo_ausencia }}</p>
+                  <!-- Indicadores extra -->
+                  <div class="flex gap-1.5 mt-1 flex-wrap">
+                    <span v-if="s.reprogramar == 1" class="text-xs px-1.5 py-0.5 bg-amber-50 text-amber-600 rounded border border-amber-200">Pendiente reprogramar</span>
+                    <span v-if="s.estado === 'reprogramada'" class="text-xs px-1.5 py-0.5 bg-amber-50 text-amber-600 rounded border border-amber-200">Reprogramada</span>
                   </div>
                 </div>
-                <span class="text-xs px-2 py-0.5 rounded-full font-medium shrink-0" :class="estadoBadge[s.estado] || 'bg-gray-100 text-gray-600'">{{ labelEstado[s.estado] || s.estado }}</span>
-                <span class="text-sm text-teal-600 shrink-0">{{ Number(s.precio).toFixed(2) }}€</span>
+                <!-- Badge estado (o recuperación) -->
+                <span class="text-xs px-2 py-0.5 rounded-full font-medium shrink-0 mt-0.5"
+                  :class="idsRecuperacion.has(s.id)
+                    ? 'bg-amber-100 text-amber-700'
+                    : estadoBadge[s.estado] || 'bg-gray-100 text-gray-600'">
+                  {{ idsRecuperacion.has(s.id) ? 'Recuperada' : (labelEstado[s.estado] || s.estado) }}
+                </span>
               </RouterLink>
             </li>
             <li v-if="!store.actual.historial?.length" class="px-5 py-8 text-center text-gray-400 text-sm">Sin sesiones</li>

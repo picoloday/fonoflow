@@ -29,13 +29,21 @@ const form = ref({
   tutor: '', parentesco: '', telefono: '', email: '',
   notas: '', activo: true,
   patologias: [], objetivos_generales: [],
-  dias_semana: [], hora_sesion: '', duracion_sesion: 30,
+  horario: [],  // [{dia:1, hora:'15:00', duracion:30}, ...]
 })
 
+function horarioDia(n) {
+  return form.value.horario.find(e => e.dia === n) || null
+}
+
 function toggleDia(n) {
-  const idx = form.value.dias_semana.indexOf(n)
-  if (idx === -1) form.value.dias_semana.push(n)
-  else form.value.dias_semana.splice(idx, 1)
+  const idx = form.value.horario.findIndex(e => e.dia === n)
+  if (idx === -1) {
+    form.value.horario.push({ dia: n, hora: '', duracion: 30 })
+    form.value.horario.sort((a, b) => a.dia - b.dia)
+  } else {
+    form.value.horario.splice(idx, 1)
+  }
 }
 
 // Errores de campo individuales
@@ -103,9 +111,7 @@ onMounted(async () => {
       patologias:          [...(p.patologias || [])],
       objetivos_generales: [...(p.objetivos_generales || [])],
       parentesco:          p.parentesco || '',
-      dias_semana:         p.dias_semana ? p.dias_semana.split(',').map(Number) : [],
-      hora_sesion:         p.hora_sesion ? p.hora_sesion.slice(0, 5) : '',
-      duracion_sesion:     parseInt(p.duracion_sesion) || 30,
+      horario:             p.dias_semana ? JSON.parse(p.dias_semana) : [],
     }
   }
 })
@@ -158,7 +164,8 @@ async function guardar() {
   try {
     const datos = {
       ...form.value,
-      objetivos_generales: form.value.objetivos_generales.filter(o => o.trim())
+      objetivos_generales: form.value.objetivos_generales.filter(o => o.trim()),
+      horario: form.value.horario.filter(e => e.hora),
     }
     if (esEditar) {
       await store.editar(route.params.id, datos)
@@ -311,43 +318,41 @@ function inputClass(campo) {
       <section class="bg-white shadow-sm rounded-xl p-6 space-y-4">
         <div>
           <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Horario habitual</h2>
-          <p class="text-xs text-gray-400 mt-0.5">Se usará para agendar sesiones automáticamente cada mes.</p>
+          <p class="text-xs text-gray-400 mt-0.5">Cada día puede tener su propia hora y duración.</p>
         </div>
 
-        <!-- Selector de días -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Días de la semana</label>
-          <div class="flex gap-2">
-            <button v-for="dia in DIAS" :key="dia.n" type="button" @click="toggleDia(dia.n)"
-              :class="['w-10 h-10 rounded-full text-sm font-semibold border-2 transition-colors',
-                form.dias_semana.includes(dia.n)
-                  ? 'bg-teal-600 text-white border-teal-600'
-                  : 'bg-white text-gray-600 border-gray-300 hover:border-teal-400']">
-              {{ dia.label }}
-            </button>
-          </div>
+        <!-- Círculos de días -->
+        <div class="flex gap-2">
+          <button v-for="dia in DIAS" :key="dia.n" type="button" @click="toggleDia(dia.n)"
+            :class="['w-10 h-10 rounded-full text-sm font-semibold border-2 transition-colors',
+              horarioDia(dia.n)
+                ? 'bg-teal-600 text-white border-teal-600'
+                : 'bg-white text-gray-600 border-gray-300 hover:border-teal-400']">
+            {{ dia.label }}
+          </button>
         </div>
 
-        <!-- Hora y duración -->
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Hora de la sesión</label>
-            <select v-model="form.hora_sesion"
-              class="block w-full border border-gray-300 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
-              <option value="">— Sin hora —</option>
+        <!-- Hora y duración por día seleccionado -->
+        <div v-if="form.horario.length" class="space-y-2">
+          <div v-for="entrada in form.horario" :key="entrada.dia"
+            class="flex items-center gap-3 bg-gray-50 rounded-lg px-3 py-2">
+            <span class="text-sm font-semibold text-teal-700 w-6">
+              {{ DIAS.find(d => d.n === entrada.dia)?.label }}
+            </span>
+            <select v-model="entrada.hora"
+              class="border border-gray-300 rounded-lg py-1.5 px-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+              <option value="">— Hora —</option>
               <option v-for="h in horasDisponibles" :key="h" :value="h">{{ h }}</option>
             </select>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Duración</label>
-            <select v-model="form.duracion_sesion"
-              class="block w-full border border-gray-300 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+            <select v-model="entrada.duracion"
+              class="border border-gray-300 rounded-lg py-1.5 px-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
               <option :value="30">30 min</option>
               <option :value="45">45 min</option>
               <option :value="60">60 min</option>
             </select>
           </div>
         </div>
+        <p v-else class="text-sm text-gray-400 italic">Selecciona uno o varios días.</p>
       </section>
 
       <!-- NOTAS -->

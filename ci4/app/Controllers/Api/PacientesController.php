@@ -93,7 +93,9 @@ class PacientesController extends BaseApiController
         $paciente = $this->model->obtener($id);
         if (!$paciente) return $this->notFound('Paciente no encontrado');
 
-        if (empty($paciente['dias_semana']) || empty($paciente['hora_sesion'])) {
+        // horario: array de {dia, hora, duracion}
+        $horario = json_decode($paciente['dias_semana'] ?? '', true);
+        if (empty($horario)) {
             return $this->fail('El paciente no tiene horario habitual configurado. Edítalo y establece días y hora de sesión.', 422);
         }
 
@@ -102,22 +104,30 @@ class PacientesController extends BaseApiController
             return $this->fail('El parámetro mes debe tener el formato YYYY-MM', 422);
         }
 
-        $diasPaciente  = array_map('intval', explode(',', $paciente['dias_semana']));
-        $hora          = substr($paciente['hora_sesion'], 0, 5);
-        $duracion      = (int)($paciente['duracion_sesion'] ?? 30);
+        // Índice rápido: dia_semana (int) → {hora, duracion}
+        $horarioPorDia = [];
+        foreach ($horario as $entrada) {
+            $horarioPorDia[(int)$entrada['dia']] = [
+                'hora'     => substr($entrada['hora'], 0, 5),
+                'duracion' => (int)($entrada['duracion'] ?? 30),
+            ];
+        }
 
-        $primerDia  = $mes . '-01';
-        $totalDias  = (int) date('t', strtotime($primerDia));
+        $primerDia = $mes . '-01';
+        $totalDias = (int) date('t', strtotime($primerDia));
 
         $sesionModel = new SesionModel();
         $creadas     = [];
         $omitidas    = [];
 
         for ($d = 1; $d <= $totalDias; $d++) {
-            $fecha      = sprintf('%s-%02d', $mes, $d);
-            $diaSemana  = (int) date('N', strtotime($fecha)); // 1=Lun … 6=Sáb
+            $fecha     = sprintf('%s-%02d', $mes, $d);
+            $diaSemana = (int) date('N', strtotime($fecha)); // 1=Lun … 6=Sáb
 
-            if (!in_array($diaSemana, $diasPaciente)) continue;
+            if (!isset($horarioPorDia[$diaSemana])) continue;
+
+            $hora     = $horarioPorDia[$diaSemana]['hora'];
+            $duracion = $horarioPorDia[$diaSemana]['duracion'];
 
             // ¿Ya tiene sesión este paciente ese día?
             $yaExiste = $this->db->table('sesiones')
@@ -190,9 +200,18 @@ class PacientesController extends BaseApiController
             fn($o) => trim($o) !== ''
         ));
 
-        // dias_semana llega como array [1,3,5] → guardamos "1,3,5"
-        $diasArr = array_filter(array_map('intval', $json['dias_semana'] ?? []), fn($d) => $d >= 1 && $d <= 6);
-        sort($diasArr);
+        // horario llega como [{dia:1,hora:"15:00",duracion:30}, ...] → guardamos como JSON
+        $horario = [];
+        foreach ($json['horario'] ?? [] as $entrada) {
+            $dia = (int)($entrada['dia'] ?? 0);
+            if ($dia < 1 || $dia > 6 || empty($entrada['hora'])) continue;
+            $horario[] = [
+                'dia'      => $dia,
+                'hora'     => substr($entrada['hora'], 0, 5),
+                'duracion' => (int)($entrada['duracion'] ?? 30),
+            ];
+        }
+        usort($horario, fn($a, $b) => $a['dia'] - $b['dia']);
 
         return [
             'nombre'              => $json['nombre'] ?? null,
@@ -205,9 +224,7 @@ class PacientesController extends BaseApiController
             'activo'              => isset($json['activo']) ? (int)(bool)$json['activo'] : 1,
             'patologias'          => $patologias,
             'objetivos_generales' => $objetivos,
-            'dias_semana'         => !empty($diasArr) ? implode(',', $diasArr) : null,
-            'hora_sesion'         => $json['hora_sesion'] ?? null,
-            'duracion_sesion'     => isset($json['duracion_sesion']) ? (int)$json['duracion_sesion'] : 30,
+            'dias_semana'         => !empty($horario) ? json_encode($horario) : null,
         ];
     }
 }
