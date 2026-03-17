@@ -89,6 +89,20 @@ class CitasController extends BaseApiController
         $inicioMin = $toMin(CitaModel::HORA_INICIO);
         $finMin    = $toMin(CitaModel::HORA_FIN);
 
+        // Detectar sesiones de recuperación: sesiones cuyo ID aparece como
+        // sesion_reprogramada_id en otra sesión con estado='reprogramada'
+        $idsRecuperacion = [];
+        if (!empty($sessDia)) {
+            $idsDia = array_column($sessDia, 'id');
+            $rows   = $this->db->table('sesiones')
+                ->select('sesion_reprogramada_id')
+                ->whereIn('sesion_reprogramada_id', $idsDia)
+                ->where('estado', 'reprogramada')
+                ->where('deleted_at IS NULL')
+                ->get()->getResultArray();
+            $idsRecuperacion = array_column($rows, 'sesion_reprogramada_id');
+        }
+
         // Índice por hora normalizada (HH:MM) → item
         $itemPorHora = [];
         foreach ($citasDia as $c) {
@@ -98,13 +112,19 @@ class CitasController extends BaseApiController
         foreach ($sessDia as $s) {
             $h = substr($s['hora_inicio'], 0, 5);
             if (!isset($itemPorHora[$h])) {
-                $itemPorHora[$h] = array_merge($s, ['_tipo' => 'sesion']);
+                $item = array_merge($s, ['_tipo' => 'sesion']);
+                if (in_array($s['id'], $idsRecuperacion)) {
+                    $item['_recuperacion'] = true;
+                }
+                $itemPorHora[$h] = $item;
             }
         }
 
-        // Horas bloqueadas por la duración de cada item (slots intermedios)
-        $horasBloqueadas = [];
+        // Horas bloqueadas por la duración de cada item (solo sesiones activas)
+        $estadosQueOcupan = ['programada', 'completada'];
+        $horasBloqueadas  = [];
         foreach ($itemPorHora as $h => $item) {
+            if (!in_array($item['estado'] ?? '', $estadosQueOcupan)) continue;
             $start = $toMin($h);
             $dur   = (int)($item['duracion'] ?? 0);
             for ($m = $start + CitaModel::INTERVALO; $m < $start + $dur; $m += CitaModel::INTERVALO) {
@@ -112,11 +132,9 @@ class CitasController extends BaseApiController
             }
         }
 
-        // Generar solo los slots visibles
-        for ($m = $inicioMin; $m < $finMin; $m += CitaModel::INTERVALO) {
-            $hora = $toHora($m);
-            if (isset($horasBloqueadas[$hora])) continue;
-            $slots[$hora] = $itemPorHora[$hora] ?? null;
+        // Solo sesiones reales (no null): la vista ya no muestra slots vacíos
+        foreach ($itemPorHora as $h => $item) {
+            $slots[$h] = $item;
         }
         ksort($slots);
 

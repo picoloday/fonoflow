@@ -23,46 +23,47 @@ async function cargar() {
 
 const agenda = computed(() => store.agenda)
 
-// Filtra los slots intermedios ocupados por sesiones de más de 15 min.
-// Lo hace el frontend para no depender de caché de PHP.
-const slotsVisibles = computed(() => {
+// Solo sesiones reales, en orden, sin slots vacíos ni intermedios
+const sesionesDelDia = computed(() => {
   const slots = agenda.value?.slots
-  if (!slots) return {}
-
-  // Calcular qué horas están bloqueadas por duración de cada sesión/cita
-  const bloqueadas = new Set()
-  for (const [hora, cita] of Object.entries(slots)) {
-    if (!cita || !cita.paciente_nombre) continue  // nulo o slot fantasma
-    const [h, m] = hora.split(':').map(Number)
-    const inicioMin = h * 60 + m
-    const dur = parseInt(cita.duracion) || 0
-    for (let t = inicioMin + 15; t < inicioMin + dur; t += 15) {
-      bloqueadas.add(`${String(Math.floor(t / 60)).padStart(2,'0')}:${String(t % 60).padStart(2,'0')}`)
-    }
-  }
-
-  return Object.fromEntries(
-    Object.entries(slots).filter(([hora, cita]) => !bloqueadas.has(hora))
-  )
+  if (!slots) return []
+  return Object.entries(slots)
+    .filter(([, cita]) => cita && cita.paciente_nombre)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([hora, cita]) => ({ hora, cita }))
 })
+
+function cardColor(cita) {
+  if (cita._recuperacion)       return 'border-l-4 border-amber-400 bg-amber-50'
+  const map = {
+    programada:   'border-l-4 border-blue-500 bg-blue-50',
+    completada:   'border-l-4 border-green-500 bg-green-50',
+    cancelada:    'border-l-4 border-red-400 bg-red-50',
+    reprogramada: 'border-l-4 border-amber-400 bg-amber-50',
+    no_asistio:   'border-l-4 border-gray-400 bg-gray-50',
+  }
+  return map[cita.estado] || 'border-l-4 border-gray-300 bg-gray-50'
+}
+
+function badgeColor(cita) {
+  if (cita._recuperacion)       return 'bg-amber-100 text-amber-700'
+  const map = {
+    programada:   'bg-blue-100 text-blue-700',
+    completada:   'bg-green-100 text-green-700',
+    cancelada:    'bg-red-100 text-red-700',
+    reprogramada: 'bg-amber-100 text-amber-700',
+    no_asistio:   'bg-gray-100 text-gray-600',
+  }
+  return map[cita.estado] || 'bg-gray-100 text-gray-600'
+}
+
+function labelCita(cita) {
+  if (cita._recuperacion) return 'Recuperación'
+  return { programada: 'Programada', completada: 'Completada', cancelada: 'No asiste', reprogramada: 'Reprogramada', no_asistio: 'No asistió' }[cita.estado] || cita.estado
+}
 
 const diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 
-const estadoColor = {
-  programada:   'border-l-4 border-teal-500 bg-teal-50',
-  completada:   'border-l-4 border-green-500 bg-green-50',
-  cancelada:    'border-l-4 border-red-400 bg-red-50',
-  reprogramada: 'border-l-4 border-amber-400 bg-amber-50',
-  no_asistio:   'border-l-4 border-gray-400 bg-gray-50',
-}
-
-const estadoBadge = {
-  programada:   'bg-teal-100 text-teal-700',
-  completada:   'bg-green-100 text-green-700',
-  cancelada:    'bg-red-100 text-red-700',
-  reprogramada: 'bg-amber-100 text-amber-700',
-  no_asistio:   'bg-gray-100 text-gray-600',
-}
 
 function prevMes() {
   const d = new Date(mes.value + '-01')
@@ -148,38 +149,34 @@ const mesNombre = computed(() => {
         </div>
 
         <div v-if="store.loading" class="p-5 space-y-3">
-          <div v-for="i in 6" :key="i" class="flex gap-3 animate-pulse">
+          <div v-for="i in 4" :key="i" class="flex gap-3 animate-pulse">
             <div class="w-12 h-8 bg-gray-200 rounded"></div>
             <div class="flex-1 h-16 bg-gray-100 rounded-lg"></div>
           </div>
         </div>
 
-        <div v-else-if="agenda" class="divide-y divide-gray-100 max-h-[600px] overflow-y-auto">
-          <div v-for="(cita, hora) in slotsVisibles" :key="hora" class="flex gap-3 px-5 py-2 items-start">
-            <span class="text-xs text-gray-400 font-mono w-11 pt-1 flex-shrink-0">{{ hora }}</span>
-            <!-- Slot libre -->
+        <div v-else-if="sesionesDelDia.length" class="divide-y divide-gray-100 max-h-[600px] overflow-y-auto">
+          <div v-for="{ hora, cita } in sesionesDelDia" :key="hora" class="flex gap-3 px-5 py-2 items-start">
+            <span class="text-xs text-gray-400 font-mono w-11 flex-shrink-0 pt-3">{{ hora }}</span>
             <RouterLink
-              v-if="!cita"
-              :to="`/sesiones/nueva?fecha=${fecha}&hora=${hora}`"
-              class="flex-1 border-2 border-dashed border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-400 hover:border-teal-400 hover:text-teal-500 transition-colors"
-            >+ Nueva sesión</RouterLink>
-            <!-- Cita o sesión -->
-            <RouterLink
-              v-else
               :to="cita._tipo === 'sesion' ? `/sesiones/${cita.id}` : `/citas/${cita.id}`"
-              class="flex-1 rounded-lg px-3 py-2 text-sm"
-              :class="estadoColor[cita.estado] || 'border-l-4 border-gray-300 bg-gray-50'"
+              class="flex-1 rounded-lg px-4 text-sm transition-colors hover:opacity-90"
+              :class="[cardColor(cita), parseInt(cita.duracion) >= 60 ? 'py-5' : 'py-2.5']"
             >
               <div class="flex items-center justify-between">
-                <p class="font-medium text-gray-900 text-sm">{{ cita.paciente_nombre }}</p>
-                <span class="text-xs px-2 py-0.5 rounded-full font-medium ml-2" :class="estadoBadge[cita.estado]">
-                  {{ cita.estado }}
+                <p class="font-semibold text-gray-900">{{ cita.paciente_nombre }}</p>
+                <span class="text-xs px-2 py-0.5 rounded-full font-medium ml-2 shrink-0" :class="badgeColor(cita)">
+                  {{ labelCita(cita) }}
                 </span>
               </div>
-              <p v-if="cita.patologias" class="text-xs text-teal-600 mt-0.5 truncate">{{ cita.patologias }}</p>
-              <p class="text-xs text-gray-500 mt-0.5">{{ cita.duracion }} min</p>
+              <p v-if="cita.patologias" class="text-xs text-gray-500 mt-0.5 truncate">{{ cita.patologias }}</p>
+              <p class="text-xs text-gray-400 mt-0.5">{{ cita.duracion }} min</p>
             </RouterLink>
           </div>
+        </div>
+
+        <div v-else-if="agenda" class="py-12 text-center text-gray-400 text-sm">
+          Sin sesiones programadas para este día
         </div>
       </div>
 

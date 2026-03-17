@@ -29,7 +29,7 @@ const progreso = computed(() => {
 const estadoBadge = computed(() => {
   const e = sesion.value?.estado
   if (e === 'completada')   return { text: 'Completada',   cls: 'bg-green-100 text-green-700' }
-  if (e === 'cancelada')    return { text: 'Cancelada',    cls: 'bg-red-100 text-red-700' }
+  if (e === 'cancelada')    return { text: 'No asiste',    cls: 'bg-red-100 text-red-700' }
   if (e === 'reprogramada') return { text: 'Reprogramada', cls: 'bg-amber-100 text-amber-700' }
   return { text: 'Programada', cls: 'bg-teal-100 text-teal-700' }
 })
@@ -194,10 +194,10 @@ async function guardarCompletar() {
           </p>
         </div>
 
-        <!-- ── CANCELADA: info ausencia ── -->
+        <!-- ── NO ASISTE: info ausencia ── -->
         <div v-if="sesion.estado === 'cancelada'"
           class="bg-red-50 border border-red-200 rounded-xl p-5 space-y-2">
-          <h2 class="font-semibold text-sm text-red-700">Sesión cancelada · Ausencia registrada</h2>
+          <h2 class="font-semibold text-sm text-red-700">No asistió · Ausencia registrada</h2>
           <p v-if="sesion.motivo_ausencia" class="text-sm text-red-600">
             <span class="font-medium">Motivo:</span> {{ sesion.motivo_ausencia }}
           </p>

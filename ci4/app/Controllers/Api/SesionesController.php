@@ -70,17 +70,17 @@ class SesionesController extends BaseApiController
             return $this->validationError($this->validator->getErrors());
         }
 
-        // Verificar solapamiento horario (excluye sesiones canceladas)
+        // Verificar conflicto horario: misma fecha y hora, solo si la existente está activa
         if (!empty($data['hora_inicio'])) {
             $hora = substr($data['hora_inicio'], 0, 5); // normalizar a HH:MM
             $conflicto = $this->db->table('sesiones')
                 ->where('fecha', $data['fecha'])
-                ->like('hora_inicio', $hora, 'after')
+                ->where('LEFT(hora_inicio, 5)', $hora)
                 ->whereIn('estado', ['programada', 'completada'])
                 ->where('deleted_at IS NULL')
                 ->countAllResults();
             if ($conflicto > 0) {
-                return $this->fail('Ya hay una sesión programada en esa franja horaria', 409);
+                return $this->fail('Esa hora ya está ocupada. Solo se puede crear una sesión si la existente está cancelada.', 409);
             }
         }
 

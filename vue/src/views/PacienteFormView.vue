@@ -11,12 +11,32 @@ const esEditar = !!route.params.id
 
 const PARENTESCOS = ['Madre', 'Padre', 'Abuelo/a', 'Tutor legal', 'Hermano/a', 'Otro']
 
+const DIAS = [
+  { n: 1, label: 'L' }, { n: 2, label: 'M' }, { n: 3, label: 'X' },
+  { n: 4, label: 'J' }, { n: 5, label: 'V' }, { n: 6, label: 'S' },
+]
+
+const horasDisponibles = (() => {
+  const slots = []
+  for (let h = 15; h < 21; h++)
+    for (let m = 0; m < 60; m += 15)
+      slots.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`)
+  return slots
+})()
+
 const form = ref({
   nombre: '', fecha_nacimiento: '',
   tutor: '', parentesco: '', telefono: '', email: '',
   notas: '', activo: true,
-  patologias: [], objetivos_generales: []
+  patologias: [], objetivos_generales: [],
+  dias_semana: [], hora_sesion: '', duracion_sesion: 30,
 })
+
+function toggleDia(n) {
+  const idx = form.value.dias_semana.indexOf(n)
+  if (idx === -1) form.value.dias_semana.push(n)
+  else form.value.dias_semana.splice(idx, 1)
+}
 
 // Errores de campo individuales
 const errores = ref({})
@@ -83,6 +103,9 @@ onMounted(async () => {
       patologias:          [...(p.patologias || [])],
       objetivos_generales: [...(p.objetivos_generales || [])],
       parentesco:          p.parentesco || '',
+      dias_semana:         p.dias_semana ? p.dias_semana.split(',').map(Number) : [],
+      hora_sesion:         p.hora_sesion ? p.hora_sesion.slice(0, 5) : '',
+      duracion_sesion:     parseInt(p.duracion_sesion) || 30,
     }
   }
 })
@@ -280,6 +303,49 @@ function inputClass(campo) {
             <input v-model="form.telefono" type="text" @input="revalidarCampo" :class="inputClass('telefono')"
               placeholder="+34 600 000 000"/>
             <p v-if="errores.telefono" class="text-xs text-red-600 mt-1">{{ errores.telefono }}</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- HORARIO HABITUAL -->
+      <section class="bg-white shadow-sm rounded-xl p-6 space-y-4">
+        <div>
+          <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Horario habitual</h2>
+          <p class="text-xs text-gray-400 mt-0.5">Se usará para agendar sesiones automáticamente cada mes.</p>
+        </div>
+
+        <!-- Selector de días -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Días de la semana</label>
+          <div class="flex gap-2">
+            <button v-for="dia in DIAS" :key="dia.n" type="button" @click="toggleDia(dia.n)"
+              :class="['w-10 h-10 rounded-full text-sm font-semibold border-2 transition-colors',
+                form.dias_semana.includes(dia.n)
+                  ? 'bg-teal-600 text-white border-teal-600'
+                  : 'bg-white text-gray-600 border-gray-300 hover:border-teal-400']">
+              {{ dia.label }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Hora y duración -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Hora de la sesión</label>
+            <select v-model="form.hora_sesion"
+              class="block w-full border border-gray-300 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+              <option value="">— Sin hora —</option>
+              <option v-for="h in horasDisponibles" :key="h" :value="h">{{ h }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Duración</label>
+            <select v-model="form.duracion_sesion"
+              class="block w-full border border-gray-300 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+              <option :value="30">30 min</option>
+              <option :value="45">45 min</option>
+              <option :value="60">60 min</option>
+            </select>
           </div>
         </div>
       </section>

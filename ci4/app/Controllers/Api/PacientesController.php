@@ -88,6 +88,81 @@ class PacientesController extends BaseApiController
         return $this->noContent();
     }
 
+    public function agendar(int $id)
+    {
+        $paciente = $this->model->obtener($id);
+        if (!$paciente) return $this->notFound('Paciente no encontrado');
+
+        if (empty($paciente['dias_semana']) || empty($paciente['hora_sesion'])) {
+            return $this->fail('El paciente no tiene horario habitual configurado. Edítalo y establece días y hora de sesión.', 422);
+        }
+
+        $mes = $this->request->getGet('mes') ?? date('Y-m');
+        if (!preg_match('/^\d{4}-\d{2}$/', $mes)) {
+            return $this->fail('El parámetro mes debe tener el formato YYYY-MM', 422);
+        }
+
+        $diasPaciente  = array_map('intval', explode(',', $paciente['dias_semana']));
+        $hora          = substr($paciente['hora_sesion'], 0, 5);
+        $duracion      = (int)($paciente['duracion_sesion'] ?? 30);
+
+        $primerDia  = $mes . '-01';
+        $totalDias  = (int) date('t', strtotime($primerDia));
+
+        $sesionModel = new SesionModel();
+        $creadas     = [];
+        $omitidas    = [];
+
+        for ($d = 1; $d <= $totalDias; $d++) {
+            $fecha      = sprintf('%s-%02d', $mes, $d);
+            $diaSemana  = (int) date('N', strtotime($fecha)); // 1=Lun … 6=Sáb
+
+            if (!in_array($diaSemana, $diasPaciente)) continue;
+
+            // ¿Ya tiene sesión este paciente ese día?
+            $yaExiste = $this->db->table('sesiones')
+                ->where('paciente_id', $id)
+                ->where('fecha', $fecha)
+                ->where('deleted_at IS NULL')
+                ->countAllResults();
+
+            if ($yaExiste) {
+                $omitidas[] = ['fecha' => $fecha, 'motivo' => 'Ya tiene sesión ese día'];
+                continue;
+            }
+
+            // ¿Hay conflicto de horario con otro paciente?
+            $conflicto = $this->db->table('sesiones')
+                ->where('fecha', $fecha)
+                ->where('LEFT(hora_inicio, 5)', $hora)
+                ->whereIn('estado', ['programada', 'completada'])
+                ->where('deleted_at IS NULL')
+                ->countAllResults();
+
+            if ($conflicto) {
+                $omitidas[] = ['fecha' => $fecha, 'motivo' => "Conflicto de horario a las $hora"];
+                continue;
+            }
+
+            $sesionModel->crear([
+                'paciente_id' => $id,
+                'fecha'       => $fecha,
+                'hora_inicio' => $hora,
+                'duracion'    => $duracion,
+                'precio'      => 12.00,
+                'objetivos'   => array_map(fn($o) => trim($o), $paciente['objetivos_generales'] ?? []),
+            ]);
+
+            $creadas[] = $fecha;
+        }
+
+        return $this->ok([
+            'creadas'  => count($creadas),
+            'fechas'   => $creadas,
+            'omitidas' => $omitidas,
+        ], count($creadas) . ' sesiones programadas para ' . $mes);
+    }
+
     public function patologias()
     {
         // Combina catálogo maestro + patologías ya usadas en pacientes
@@ -115,6 +190,10 @@ class PacientesController extends BaseApiController
             fn($o) => trim($o) !== ''
         ));
 
+        // dias_semana llega como array [1,3,5] → guardamos "1,3,5"
+        $diasArr = array_filter(array_map('intval', $json['dias_semana'] ?? []), fn($d) => $d >= 1 && $d <= 6);
+        sort($diasArr);
+
         return [
             'nombre'              => $json['nombre'] ?? null,
             'tutor'               => $json['tutor'] ?? null,
@@ -126,6 +205,9 @@ class PacientesController extends BaseApiController
             'activo'              => isset($json['activo']) ? (int)(bool)$json['activo'] : 1,
             'patologias'          => $patologias,
             'objetivos_generales' => $objetivos,
+            'dias_semana'         => !empty($diasArr) ? implode(',', $diasArr) : null,
+            'hora_sesion'         => $json['hora_sesion'] ?? null,
+            'duracion_sesion'     => isset($json['duracion_sesion']) ? (int)$json['duracion_sesion'] : 30,
         ];
     }
 }

@@ -12,6 +12,8 @@ const nombreMes = (ym) => {
   const [y, m] = ym.split('-')
   return new Date(y, m - 1).toLocaleString('es', { month: 'long', year: 'numeric' })
 }
+
+const labelEstado = { programada: 'Programada', completada: 'Completada', cancelada: 'No asiste', reprogramada: 'Reprogramada' }
 </script>
 
 <template>
@@ -65,7 +67,7 @@ const nombreMes = (ym) => {
                   'bg-amber-100 text-amber-700':  s.estado === 'reprogramada',
                   'bg-gray-100 text-gray-600':    !['programada','completada','cancelada','reprogramada'].includes(s.estado),
                 }">
-                {{ s.estado }}
+                {{ labelEstado[s.estado] || s.estado }}
               </span>
               <span class="text-sm font-medium text-teal-600 shrink-0">{{ Number(s.precio).toFixed(2) }}€</span>
               <svg class="w-4 h-4 text-gray-300 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">

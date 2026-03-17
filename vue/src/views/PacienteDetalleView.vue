@@ -2,12 +2,33 @@
 import { onMounted, computed, ref } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { usePacientesStore } from '@/stores/pacientes'
+import { agendarSesiones } from '@/api/pacientes'
 
 const store  = usePacientesStore()
 const route  = useRoute()
 const router = useRouter()
 const confirmandoBorrar = ref(false)
 const borrando          = ref(false)
+
+// Agendar mes
+const mesAgendar      = ref(new Date().toISOString().slice(0, 7))
+const agendando       = ref(false)
+const resultadoAgendar = ref(null)
+
+async function agendar() {
+  agendando.value = true
+  resultadoAgendar.value = null
+  try {
+    const { data } = await agendarSesiones(store.actual.id, mesAgendar.value)
+    resultadoAgendar.value = data.data
+    // Recargar historial
+    await store.cargarUno(store.actual.id)
+  } catch(e) {
+    resultadoAgendar.value = { error: e.response?.data?.message || 'Error al agendar' }
+  } finally {
+    agendando.value = false
+  }
+}
 
 onMounted(() => store.cargarUno(route.params.id))
 
@@ -28,6 +49,8 @@ const estadoBadge = {
   cancelada:    'bg-red-100 text-red-700',
   reprogramada: 'bg-amber-100 text-amber-700',
 }
+
+const labelEstado = { programada: 'Programada', completada: 'Completada', cancelada: 'No asiste', reprogramada: 'Reprogramada' }
 
 function progreso(sesion) {
   const objs = sesion.objetivos || []
@@ -99,6 +122,45 @@ function progreso(sesion) {
               <span v-for="p in store.actual.patologias" :key="p" class="text-xs bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full">{{ p }}</span>
             </div>
           </div>
+
+          <!-- Horario habitual + Agendar -->
+          <div v-if="store.actual.hora_sesion" class="border-t border-gray-100 pt-3">
+            <span class="text-xs text-gray-400">Horario habitual</span>
+            <p class="text-sm mt-0.5">
+              {{ ['','Lun','Mar','Mié','Jue','Vie','Sáb'].filter((_,i) => store.actual.dias_semana?.split(',').map(Number).includes(i)).join(', ') }}
+              · {{ store.actual.hora_sesion?.slice(0,5) }}
+              · {{ store.actual.duracion_sesion }} min
+            </p>
+          </div>
+
+          <!-- Panel agendar mes -->
+          <div class="border-t border-gray-100 pt-3 space-y-2">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Agendar sesiones</p>
+            <div class="flex gap-2 items-center">
+              <input type="month" v-model="mesAgendar"
+                class="flex-1 border border-gray-300 rounded-lg py-1.5 px-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"/>
+              <button @click="agendar" :disabled="agendando || !store.actual.hora_sesion"
+                class="px-3 py-1.5 bg-teal-600 text-white text-xs font-medium rounded-lg hover:bg-teal-700 disabled:opacity-50 transition-colors whitespace-nowrap">
+                {{ agendando ? '...' : 'Agendar' }}
+              </button>
+            </div>
+            <p v-if="!store.actual.hora_sesion" class="text-xs text-amber-600">
+              Configura el horario habitual editando el paciente.
+            </p>
+            <!-- Resultado -->
+            <div v-if="resultadoAgendar">
+              <div v-if="resultadoAgendar.error" class="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">
+                {{ resultadoAgendar.error }}
+              </div>
+              <div v-else class="text-xs bg-teal-50 border border-teal-200 rounded-lg px-3 py-2 space-y-1">
+                <p class="text-teal-700 font-medium">✓ {{ resultadoAgendar.creadas }} sesiones creadas</p>
+                <div v-if="resultadoAgendar.omitidas?.length" class="text-gray-500">
+                  <p class="font-medium text-gray-600">Omitidas ({{ resultadoAgendar.omitidas.length }}):</p>
+                  <p v-for="o in resultadoAgendar.omitidas" :key="o.fecha">{{ o.fecha }} — {{ o.motivo }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Historial -->
@@ -116,7 +178,7 @@ function progreso(sesion) {
                     <span class="text-xs text-gray-400">{{ progreso(s) }}%</span>
                   </div>
                 </div>
-                <span class="text-xs px-2 py-0.5 rounded-full font-medium shrink-0" :class="estadoBadge[s.estado] || 'bg-gray-100 text-gray-600'">{{ s.estado }}</span>
+                <span class="text-xs px-2 py-0.5 rounded-full font-medium shrink-0" :class="estadoBadge[s.estado] || 'bg-gray-100 text-gray-600'">{{ labelEstado[s.estado] || s.estado }}</span>
                 <span class="text-sm text-teal-600 shrink-0">{{ Number(s.precio).toFixed(2) }}€</span>
               </RouterLink>
             </li>
