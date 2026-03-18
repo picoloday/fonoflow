@@ -2,6 +2,7 @@
 import { onMounted } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { useCitasStore } from '@/stores/citas'
+import { formatFecha } from '@/utils/fecha'
 
 const store  = useCitasStore()
 const route  = useRoute()
@@ -33,7 +34,7 @@ async function cancelar() {
         </RouterLink>
         <div class="flex-1">
           <h1 class="text-xl font-bold text-gray-900">{{ store.actual.paciente?.nombre }}</h1>
-          <p class="text-sm text-gray-400">{{ store.actual.fecha }} · {{ store.actual.hora_inicio }} · {{ store.actual.duracion }} min</p>
+          <p class="text-sm text-gray-400">{{ formatFecha(store.actual.fecha) }} · {{ store.actual.hora_inicio }} · {{ store.actual.duracion }} min</p>
         </div>
       </div>
 

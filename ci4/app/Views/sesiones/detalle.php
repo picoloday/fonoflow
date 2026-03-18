@@ -7,7 +7,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
         </svg>
     </a>
-    <h2 class="text-2xl font-semibold">Sesión — <?= date('d/m/Y', strtotime($sesion['fecha'])) ?></h2>
+    <h2 class="text-2xl font-semibold">Sesión — <?= fecha_dia($sesion['fecha']) ?></h2>
     <div class="ml-auto flex gap-2">
         <a href="<?= base_url('sesiones/' . $sesion['id'] . '/editar') ?>"
            class="inline-flex items-center gap-1 px-3 py-1.5 border border-teal-500 text-teal-600 rounded-lg hover:bg-teal-50 text-sm transition-colors">
@@ -41,7 +41,7 @@
             <div class="grid grid-cols-2 gap-3 text-sm text-gray-600">
                 <div>
                     <div class="font-semibold text-gray-700">Fecha</div>
-                    <div><?= date('d/m/Y', strtotime($sesion['fecha'])) ?></div>
+                    <div><?= fecha_dia($sesion['fecha']) ?></div>
                 </div>
                 <div>
                     <div class="font-semibold text-gray-700">Duración</div>

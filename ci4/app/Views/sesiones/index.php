@@ -55,7 +55,7 @@
                             <div>
                                 <div class="font-semibold"><?= esc($s['paciente_nombre']) ?></div>
                                 <small class="text-gray-500">
-                                    <?= date('d/m/Y', strtotime($s['fecha'])) ?> · <?= $s['duracion'] ?> min
+                                    <?= fecha_dia($s['fecha']) ?> · <?= $s['duracion'] ?> min
                                     <?php if (!empty($s['objetivos'])): ?>
                                         <?php $cumplidos = count(array_filter($s['objetivos'], fn($o) => $o['cumplido'])); ?>
                                         · <span class="text-<?php echo $cumplidos === count($s['objetivos']) ? 'green' : 'yellow'; ?>-500">

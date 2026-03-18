@@ -143,7 +143,7 @@
                         <div>
                             <div class="font-medium"><?= esc($s['paciente_nombre']) ?></div>
                             <div class="text-gray-500 text-sm">
-                                <?= date('d/m/Y', strtotime($s['fecha'])) ?> · <?= $s['duracion'] ?> min
+                                <?= fecha_dia($s['fecha']) ?> · <?= $s['duracion'] ?> min
                             </div>
                         </div>
                         <span class="text-green-600 font-semibold"><?= number_format($s['precio'], 2) ?>€</span>

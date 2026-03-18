@@ -84,7 +84,7 @@
                 <div class="px-4 py-2 flex justify-between text-gray-500 text-sm border-t border-gray-50">
                     <span><?= $p['total_sesiones'] ?> sesiones</span>
                     <?php if ($p['ultima_sesion']): ?>
-                        <span>Última: <?= date('d/m/Y', strtotime($p['ultima_sesion'])) ?></span>
+                        <span>Última: <?= fecha_dia($p['ultima_sesion']) ?></span>
                     <?php endif; ?>
                 </div>
                 <div class="mt-auto p-4 pt-2 flex gap-2">

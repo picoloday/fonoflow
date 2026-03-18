@@ -3,6 +3,7 @@ import { onMounted, computed, ref } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { usePacientesStore } from '@/stores/pacientes'
 import { agendarSesiones } from '@/api/pacientes'
+import { formatFecha } from '@/utils/fecha'
 
 const store  = usePacientesStore()
 const route  = useRoute()
@@ -173,14 +174,13 @@ const idsRecuperacion = computed(() => {
                 <!-- Fecha y hora -->
                 <div class="flex-1 min-w-0">
                   <p class="text-sm font-medium text-gray-900">
-                    {{ s.fecha }}<span v-if="s.hora_inicio" class="text-gray-400 font-normal"> · {{ s.hora_inicio.slice(0,5) }}</span>
+                    {{ formatFecha(s.fecha) }}<span v-if="s.hora_inicio" class="text-gray-400 font-normal"> · {{ s.hora_inicio.slice(0,5) }}</span>
                   </p>
                   <!-- Motivo ausencia -->
                   <p v-if="s.motivo_ausencia" class="text-sm text-red-500 mt-0.5">{{ s.motivo_ausencia }}</p>
                   <!-- Indicadores extra -->
                   <div class="flex gap-1.5 mt-1 flex-wrap">
-                    <span v-if="s.reprogramar == 1" class="text-sm px-1.5 py-0.5 bg-amber-50 text-amber-600 rounded border border-amber-200">Pendiente reprogramar</span>
-                    <span v-if="s.estado === 'reprogramada'" class="text-sm px-1.5 py-0.5 bg-amber-50 text-amber-600 rounded border border-amber-200">Reprogramada</span>
+                    <span v-if="s.reprogramar == 1 && s.estado !== 'reprogramada'" class="text-sm px-1.5 py-0.5 bg-amber-50 text-amber-600 rounded border border-amber-200">Pendiente reprogramar</span>
                   </div>
                 </div>
                 <!-- Badge estado (o recuperación) -->

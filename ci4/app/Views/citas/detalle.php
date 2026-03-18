@@ -49,7 +49,7 @@
             <div class="grid grid-cols-2 gap-3 text-sm text-gray-600">
                 <div>
                     <div class="font-semibold text-gray-700">Fecha</div>
-                    <div><?= date('d/m/Y', strtotime($cita['fecha'])) ?></div>
+                    <div><?= fecha_dia($cita['fecha']) ?></div>
                 </div>
                 <div>
                     <div class="font-semibold text-gray-700">Hora</div>

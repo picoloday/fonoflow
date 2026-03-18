@@ -2,6 +2,7 @@
 import { onMounted, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useSesionesStore } from '@/stores/sesiones'
+import { formatFecha } from '@/utils/fecha'
 
 const store = useSesionesStore()
 onMounted(() => store.cargar())
@@ -48,7 +49,8 @@ const labelEstado = { programada: 'Programada', completada: 'Completada', cancel
             <RouterLink :to="`/sesiones/${s.id}`" class="flex flex-1 items-center gap-3 px-5 py-3 hover:bg-gray-50 min-w-0">
               <div class="flex-1 min-w-0">
                 <p class="text-sm font-medium text-gray-900 truncate">{{ s.paciente_nombre }}</p>
-                <p class="text-sm text-gray-400">{{ s.fecha }} {{ s.hora_inicio ? '· ' + s.hora_inicio.slice(0,5) : '' }}</p>
+                <p class="text-sm text-gray-400">{{ formatFecha(s.fecha) }} {{ s.hora_inicio ? '· ' + s.hora_inicio.slice(0,5) : '' }}</p>
+                <p v-if="s.estado === 'cancelada' && s.reprogramar" class="text-xs text-amber-600 mt-0.5">Pendiente de reprogramar</p>
               </div>
               <span class="text-sm px-2 py-0.5 rounded-full font-medium shrink-0"
                 :class="{
@@ -64,16 +66,6 @@ const labelEstado = { programada: 'Programada', completada: 'Completada', cancel
               <svg class="w-4 h-4 text-gray-300 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
               </svg>
-            </RouterLink>
-            <!-- Botón reprogramar: solo en canceladas pendientes -->
-            <RouterLink v-if="s.estado === 'cancelada' && s.reprogramar"
-              :to="`/sesiones/nueva?paciente=${s.paciente_id}`"
-              class="flex items-center gap-1 px-3 border-l border-amber-200 bg-amber-50 text-amber-700 text-sm font-medium hover:bg-amber-100 transition-colors shrink-0"
-              title="Crear nueva sesión (reprogramar)">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-              </svg>
-              Reprogramar
             </RouterLink>
           </li>
         </ul>

@@ -59,12 +59,12 @@
             <?php if ($paciente['fecha_nacimiento']): ?>
                 <div class="mb-2 text-sm">
                     <span class="font-semibold">Nacimiento:</span>
-                    <?= date('d/m/Y', strtotime($paciente['fecha_nacimiento'])) ?>
+                    <?= fecha_dia($paciente['fecha_nacimiento']) ?>
                 </div>
             <?php endif; ?>
             <div class="text-sm">
                 <span class="font-semibold">Alta:</span>
-                <?= $paciente['fecha_alta'] ? date('d/m/Y', strtotime($paciente['fecha_alta'])) : '—' ?>
+                <?= $paciente['fecha_alta'] ? fecha_dia($paciente['fecha_alta']) : '—' ?>
             </div>
         </div>
 
@@ -142,7 +142,7 @@
                             <div class="flex justify-between items-start">
                                 <div class="flex-1">
                                     <div class="font-semibold text-sm mb-1">
-                                        <?= date('d/m/Y', strtotime($s['fecha'])) ?> · <?= $s['duracion'] ?> min
+                                        <?= fecha_dia($s['fecha']) ?> · <?= $s['duracion'] ?> min
                                     </div>
                                     <?php if ($s['evolutivo']): ?>
                                         <p class="text-gray-500 text-sm mb-1">
