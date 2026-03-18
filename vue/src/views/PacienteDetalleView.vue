@@ -44,7 +44,7 @@ async function borrarPaciente() {
 }
 
 const estadoBadge = {
-  programada:   'bg-teal-100 text-teal-700',
+  programada:   'bg-gray-100 text-gray-600',
   completada:   'bg-green-100 text-green-700',
   cancelada:    'bg-red-100 text-red-700',
   reprogramada: 'bg-amber-100 text-amber-700',
@@ -114,19 +114,19 @@ const idsRecuperacion = computed(() => {
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Info básica -->
         <div class="bg-white shadow-sm rounded-xl p-5 space-y-3">
-          <div v-if="store.actual.tutor"><span class="text-xs text-gray-400">Tutor</span><p class="text-sm">{{ store.actual.tutor }}</p></div>
-          <div v-if="store.actual.telefono"><span class="text-xs text-gray-400">Teléfono</span><p class="text-sm">{{ store.actual.telefono }}</p></div>
-          <div v-if="store.actual.email"><span class="text-xs text-gray-400">Email</span><p class="text-sm">{{ store.actual.email }}</p></div>
+          <div v-if="store.actual.tutor"><span class="text-sm text-gray-400">Tutor</span><p class="text-sm">{{ store.actual.tutor }}</p></div>
+          <div v-if="store.actual.telefono"><span class="text-sm text-gray-400">Teléfono</span><p class="text-sm">{{ store.actual.telefono }}</p></div>
+          <div v-if="store.actual.email"><span class="text-sm text-gray-400">Email</span><p class="text-sm">{{ store.actual.email }}</p></div>
           <div v-if="store.actual.patologias?.length">
-            <span class="text-xs text-gray-400">Patologías</span>
+            <span class="text-sm text-gray-400">Patologías</span>
             <div class="flex flex-wrap gap-1 mt-1">
-              <span v-for="p in store.actual.patologias" :key="p" class="text-xs bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full">{{ p }}</span>
+              <span v-for="p in store.actual.patologias" :key="p" class="text-sm bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full">{{ p }}</span>
             </div>
           </div>
 
           <!-- Horario habitual -->
           <div v-if="store.actual.dias_semana" class="border-t border-gray-100 pt-3">
-            <span class="text-xs text-gray-400">Horario habitual</span>
+            <span class="text-sm text-gray-400">Horario habitual</span>
             <div class="mt-1 space-y-0.5">
               <p v-for="e in JSON.parse(store.actual.dias_semana)" :key="e.dia" class="text-sm">
                 {{ ['','Lun','Mar','Mié','Jue','Vie','Sáb'][e.dia] }} · {{ e.hora }} · {{ e.duracion }} min
@@ -136,24 +136,24 @@ const idsRecuperacion = computed(() => {
 
           <!-- Panel agendar mes -->
           <div class="border-t border-gray-100 pt-3 space-y-2">
-            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Agendar sesiones</p>
+            <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">Agendar sesiones</p>
             <div class="flex gap-2 items-center">
               <input type="month" v-model="mesAgendar"
                 class="flex-1 border border-gray-300 rounded-lg py-1.5 px-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"/>
               <button @click="agendar" :disabled="agendando || !store.actual.dias_semana"
-                class="px-3 py-1.5 bg-teal-600 text-white text-xs font-medium rounded-lg hover:bg-teal-700 disabled:opacity-50 transition-colors whitespace-nowrap">
+                class="px-3 py-1.5 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 disabled:opacity-50 transition-colors whitespace-nowrap">
                 {{ agendando ? '...' : 'Agendar' }}
               </button>
             </div>
-            <p v-if="!store.actual.dias_semana" class="text-xs text-amber-600">
+            <p v-if="!store.actual.dias_semana" class="text-sm text-amber-600">
               Configura el horario habitual editando el paciente.
             </p>
             <!-- Resultado -->
             <div v-if="resultadoAgendar">
-              <div v-if="resultadoAgendar.error" class="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">
+              <div v-if="resultadoAgendar.error" class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">
                 {{ resultadoAgendar.error }}
               </div>
-              <div v-else class="text-xs bg-teal-50 border border-teal-200 rounded-lg px-3 py-2 space-y-1">
+              <div v-else class="text-sm bg-teal-50 border border-teal-200 rounded-lg px-3 py-2 space-y-1">
                 <p class="text-teal-700 font-medium">✓ {{ resultadoAgendar.creadas }} sesiones creadas</p>
                 <div v-if="resultadoAgendar.omitidas?.length" class="text-gray-500">
                   <p class="font-medium text-gray-600">Omitidas ({{ resultadoAgendar.omitidas.length }}):</p>
@@ -176,15 +176,15 @@ const idsRecuperacion = computed(() => {
                     {{ s.fecha }}<span v-if="s.hora_inicio" class="text-gray-400 font-normal"> · {{ s.hora_inicio.slice(0,5) }}</span>
                   </p>
                   <!-- Motivo ausencia -->
-                  <p v-if="s.motivo_ausencia" class="text-xs text-red-500 mt-0.5">{{ s.motivo_ausencia }}</p>
+                  <p v-if="s.motivo_ausencia" class="text-sm text-red-500 mt-0.5">{{ s.motivo_ausencia }}</p>
                   <!-- Indicadores extra -->
                   <div class="flex gap-1.5 mt-1 flex-wrap">
-                    <span v-if="s.reprogramar == 1" class="text-xs px-1.5 py-0.5 bg-amber-50 text-amber-600 rounded border border-amber-200">Pendiente reprogramar</span>
-                    <span v-if="s.estado === 'reprogramada'" class="text-xs px-1.5 py-0.5 bg-amber-50 text-amber-600 rounded border border-amber-200">Reprogramada</span>
+                    <span v-if="s.reprogramar == 1" class="text-sm px-1.5 py-0.5 bg-amber-50 text-amber-600 rounded border border-amber-200">Pendiente reprogramar</span>
+                    <span v-if="s.estado === 'reprogramada'" class="text-sm px-1.5 py-0.5 bg-amber-50 text-amber-600 rounded border border-amber-200">Reprogramada</span>
                   </div>
                 </div>
                 <!-- Badge estado (o recuperación) -->
-                <span class="text-xs px-2 py-0.5 rounded-full font-medium shrink-0 mt-0.5"
+                <span class="text-sm px-2 py-0.5 rounded-full font-medium shrink-0 mt-0.5"
                   :class="idsRecuperacion.has(s.id)
                     ? 'bg-amber-100 text-amber-700'
                     : estadoBadge[s.estado] || 'bg-gray-100 text-gray-600'">

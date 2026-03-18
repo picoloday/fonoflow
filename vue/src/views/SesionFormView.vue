@@ -182,7 +182,7 @@ async function guardar() {
             <option value="">— Selecciona paciente —</option>
             <option v-for="p in pacientes" :key="p.id" :value="p.id">{{ p.nombre }}</option>
           </select>
-          <p v-if="esEditar" class="text-xs text-gray-400 mt-1">El paciente no se puede cambiar al editar.</p>
+          <p v-if="esEditar" class="text-sm text-gray-400 mt-1">El paciente no se puede cambiar al editar.</p>
         </div>
 
         <!-- Panel info paciente -->
@@ -206,14 +206,14 @@ async function guardar() {
             <div v-if="infoPaciente.ultima_sesion.objetivos?.length">
               <div class="flex flex-wrap gap-1 mt-1">
                 <span v-for="o in infoPaciente.ultima_sesion.objetivos" :key="o.id || o.objetivo"
-                  :class="['text-xs px-2 py-0.5 rounded-full',
+                  :class="['text-sm px-2 py-0.5 rounded-full',
                     o.cumplido ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600']">
                   {{ o.objetivo || o }}<span v-if="o.cumplido"> ✓</span>
                 </span>
               </div>
             </div>
           </div>
-          <p v-else class="text-teal-600 text-xs italic">Sin sesiones anteriores registradas.</p>
+          <p v-else class="text-teal-600 text-sm italic">Sin sesiones anteriores registradas.</p>
         </div>
       </section>
 
@@ -258,9 +258,9 @@ async function guardar() {
         <div class="flex items-center justify-between">
           <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Objetivos de la sesión</h2>
           <button type="button" @click="form.objetivos.push('')"
-            class="text-xs text-teal-600 hover:text-teal-700 font-medium">+ Añadir</button>
+            class="text-sm text-teal-600 hover:text-teal-700 font-medium">+ Añadir</button>
         </div>
-        <p class="text-xs text-gray-400">Se marcarán como conseguidos al completar la sesión.</p>
+        <p class="text-sm text-gray-400">Se marcarán como conseguidos al completar la sesión.</p>
         <div class="space-y-2">
           <div v-for="(_, i) in form.objetivos" :key="i" class="flex gap-2">
             <input v-model="form.objetivos[i]" type="text" placeholder="Objetivo..."
@@ -287,7 +287,7 @@ async function guardar() {
         </div>
         <p v-else class="text-sm text-gray-400 italic">No hay actividades en el catálogo todavía.</p>
         <div class="pt-2 border-t border-gray-100">
-          <label class="block text-xs text-gray-500 mb-1">Nueva actividad al catálogo</label>
+          <label class="block text-sm text-gray-500 mb-1">Nueva actividad al catálogo</label>
           <div class="flex gap-2">
             <input v-model="nuevaActividad" type="text" placeholder="Ej: Lectura guiada..."
               @keydown.enter.prevent="agregarActividad()"
@@ -298,7 +298,7 @@ async function guardar() {
               {{ addingAct ? '...' : '+ Añadir' }}
             </button>
           </div>
-          <p v-if="errorAct" class="text-xs text-red-600 mt-1">{{ errorAct }}</p>
+          <p v-if="errorAct" class="text-sm text-red-600 mt-1">{{ errorAct }}</p>
         </div>
       </section>
 
@@ -317,7 +317,7 @@ async function guardar() {
         </div>
         <p v-else class="text-sm text-gray-400 italic">No hay materiales en el catálogo todavía.</p>
         <div class="pt-2 border-t border-gray-100">
-          <label class="block text-xs text-gray-500 mb-1">Nuevo material al catálogo</label>
+          <label class="block text-sm text-gray-500 mb-1">Nuevo material al catálogo</label>
           <div class="flex gap-2">
             <input v-model="nuevaMaterial" type="text" placeholder="Ej: Tarjetas de vocabulario..."
               @keydown.enter.prevent="agregarMaterial()"
@@ -328,7 +328,7 @@ async function guardar() {
               {{ addingMat ? '...' : '+ Añadir' }}
             </button>
           </div>
-          <p v-if="errorMat" class="text-xs text-red-600 mt-1">{{ errorMat }}</p>
+          <p v-if="errorMat" class="text-sm text-red-600 mt-1">{{ errorMat }}</p>
         </div>
       </section>
 

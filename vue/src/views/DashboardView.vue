@@ -13,7 +13,7 @@ onMounted(async () => {
 })
 
 const estadoColor = {
-  programada:   'bg-teal-100 text-teal-700',
+  programada:   'bg-gray-100 text-gray-600',
   completada:   'bg-green-100 text-green-700',
   cancelada:    'bg-red-100 text-red-700',
   reprogramada: 'bg-amber-100 text-amber-700',
@@ -41,15 +41,15 @@ const estadoColor = {
       <!-- Stats -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div class="bg-white shadow-sm rounded-xl p-5">
-          <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Pacientes</p>
+          <p class="text-sm text-gray-500 uppercase tracking-wide font-medium">Pacientes</p>
           <p class="text-3xl font-bold text-teal-600 mt-1">{{ stats.total_pacientes }}</p>
         </div>
         <div class="bg-white shadow-sm rounded-xl p-5">
-          <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Sesiones hoy</p>
+          <p class="text-sm text-gray-500 uppercase tracking-wide font-medium">Sesiones hoy</p>
           <p class="text-3xl font-bold text-teal-600 mt-1">{{ stats.citas_hoy }}</p>
         </div>
         <div class="bg-white shadow-sm rounded-xl p-5">
-          <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Sesiones este mes</p>
+          <p class="text-sm text-gray-500 uppercase tracking-wide font-medium">Sesiones este mes</p>
           <p class="text-3xl font-bold text-teal-600 mt-1">{{ stats.sesiones_este_mes }}</p>
         </div>
       </div>
@@ -61,7 +61,7 @@ const estadoColor = {
         <div class="bg-white shadow-sm rounded-xl overflow-hidden">
           <div class="px-5 py-3 border-b bg-gray-50 flex justify-between items-center">
             <h2 class="font-semibold text-gray-700 text-sm">Sesiones de hoy</h2>
-            <RouterLink to="/agenda" class="text-xs text-teal-600 hover:underline">Ver agenda</RouterLink>
+            <RouterLink to="/agenda" class="text-sm text-teal-600 hover:underline">Ver agenda</RouterLink>
           </div>
           <div v-if="stats.proximas_citas.length === 0" class="px-5 py-8 text-center text-gray-400 text-sm">
             No hay sesiones programadas para hoy
@@ -72,9 +72,9 @@ const estadoColor = {
                 <span class="text-sm font-mono text-gray-500 w-12 shrink-0">{{ s.hora_inicio ? s.hora_inicio.slice(0,5) : '—' }}</span>
                 <div class="flex-1 min-w-0">
                   <p class="text-sm font-medium text-gray-900 truncate">{{ s.paciente_nombre }}</p>
-                  <p class="text-xs text-gray-400">{{ s.duracion }} min</p>
+                  <p class="text-sm text-gray-400">{{ s.duracion }} min</p>
                 </div>
-                <span class="text-xs px-2 py-0.5 rounded-full font-medium shrink-0" :class="estadoColor[s.estado] || 'bg-gray-100 text-gray-600'">
+                <span class="text-sm px-2 py-0.5 rounded-full font-medium shrink-0" :class="estadoColor[s.estado] || 'bg-gray-100 text-gray-600'">
                   {{ s.estado }}
                 </span>
               </RouterLink>
@@ -86,7 +86,6 @@ const estadoColor = {
         <div class="bg-white shadow-sm rounded-xl overflow-hidden">
           <div class="px-5 py-3 border-b bg-gray-50 flex justify-between items-center">
             <h2 class="font-semibold text-gray-700 text-sm">Últimas sesiones</h2>
-            <RouterLink to="/sesiones" class="text-xs text-teal-600 hover:underline">Ver todas</RouterLink>
           </div>
           <div v-if="stats.ultimas_sesiones.length === 0" class="px-5 py-8 text-center text-gray-400 text-sm">
             Sin sesiones registradas
@@ -96,9 +95,9 @@ const estadoColor = {
               <RouterLink :to="`/sesiones/${s.id}`" class="px-5 py-3 flex items-center gap-3 hover:bg-gray-50">
                 <div class="flex-1 min-w-0">
                   <p class="text-sm font-medium text-gray-900 truncate">{{ s.paciente_nombre }}</p>
-                  <p class="text-xs text-gray-400">{{ s.fecha }}</p>
+                  <p class="text-sm text-gray-400">{{ s.fecha }}</p>
                 </div>
-                <span class="text-xs px-2 py-0.5 rounded-full font-medium shrink-0" :class="estadoColor[s.estado] || 'bg-gray-100 text-gray-600'">
+                <span class="text-sm px-2 py-0.5 rounded-full font-medium shrink-0" :class="estadoColor[s.estado] || 'bg-gray-100 text-gray-600'">
                   {{ s.estado }}
                 </span>
               </RouterLink>

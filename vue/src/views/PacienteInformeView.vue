@@ -82,7 +82,7 @@ function imprimir() {
 
       <!-- Datos del paciente -->
       <section>
-        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Datos del paciente</h3>
+        <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Datos del paciente</h3>
         <div class="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
           <div><span class="text-gray-400">Nombre: </span><span class="font-medium text-gray-900">{{ store.actual.nombre }}</span></div>
           <div v-if="store.actual.tutor"><span class="text-gray-400">Tutor/Responsable: </span><span class="font-medium text-gray-900">{{ store.actual.tutor }}</span></div>
@@ -97,28 +97,28 @@ function imprimir() {
 
       <!-- Resumen estadístico -->
       <section>
-        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Resumen de intervención</h3>
+        <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Resumen de intervención</h3>
         <div class="grid grid-cols-3 gap-4">
           <div class="bg-gray-50 rounded-xl p-4 text-center">
             <p class="text-2xl font-bold text-gray-900">{{ sesionesTotales }}</p>
-            <p class="text-xs text-gray-400 mt-1">Sesiones programadas</p>
+            <p class="text-sm text-gray-400 mt-1">Sesiones programadas</p>
           </div>
           <div class="bg-teal-50 rounded-xl p-4 text-center">
             <p class="text-2xl font-bold text-teal-700">{{ sesionesCompletadas.length }}</p>
-            <p class="text-xs text-gray-400 mt-1">Sesiones realizadas</p>
+            <p class="text-sm text-gray-400 mt-1">Sesiones realizadas</p>
           </div>
           <div class="bg-gray-50 rounded-xl p-4 text-center">
             <p class="text-2xl font-bold text-gray-900">
               {{ sesionesTotales ? Math.round((sesionesCompletadas.length / sesionesTotales) * 100) : 0 }}%
             </p>
-            <p class="text-xs text-gray-400 mt-1">Asistencia</p>
+            <p class="text-sm text-gray-400 mt-1">Asistencia</p>
           </div>
         </div>
       </section>
 
       <!-- Objetivos trabajados -->
       <section v-if="objetivosResumen.length">
-        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Objetivos trabajados</h3>
+        <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Objetivos trabajados</h3>
         <div class="space-y-2">
           <div v-for="o in objetivosResumen" :key="o.objetivo" class="flex items-center gap-3">
             <div class="flex-1 min-w-0">
@@ -128,10 +128,10 @@ function imprimir() {
                   <div class="h-full bg-teal-500 rounded-full transition-all"
                     :style="`width:${Math.round((o.cumplidas / o.veces) * 100)}%`"></div>
                 </div>
-                <span class="text-xs text-gray-400 shrink-0">{{ o.cumplidas }}/{{ o.veces }}</span>
+                <span class="text-sm text-gray-400 shrink-0">{{ o.cumplidas }}/{{ o.veces }}</span>
               </div>
             </div>
-            <span class="text-xs font-medium shrink-0"
+            <span class="text-sm font-medium shrink-0"
               :class="o.cumplidas === o.veces ? 'text-green-600' : 'text-gray-400'">
               {{ Math.round((o.cumplidas / o.veces) * 100) }}%
             </span>
@@ -141,16 +141,16 @@ function imprimir() {
 
       <!-- Historial de sesiones -->
       <section v-if="sesionesCompletadas.length">
-        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Historial de sesiones realizadas</h3>
+        <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Historial de sesiones realizadas</h3>
         <div class="space-y-4">
           <div v-for="s in sesionesCompletadas" :key="s.id" class="border border-gray-100 rounded-xl p-4">
             <div class="flex items-center justify-between mb-2">
               <p class="text-sm font-semibold text-gray-900">{{ formatFecha(s.fecha) }}</p>
-              <span class="text-xs text-gray-400">{{ s.duracion }} min</span>
+              <span class="text-sm text-gray-400">{{ s.duracion }} min</span>
             </div>
             <div v-if="s.objetivos?.length" class="flex flex-wrap gap-1 mb-2">
               <span v-for="o in s.objetivos" :key="o.id || o.objetivo"
-                class="text-xs px-2 py-0.5 rounded-full"
+                class="text-sm px-2 py-0.5 rounded-full"
                 :class="o.cumplido ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'">
                 {{ o.cumplido ? '✓' : '○' }} {{ o.objetivo }}
               </span>

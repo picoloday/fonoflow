@@ -76,16 +76,16 @@ async function cargar() {
           </div>
           <div class="min-w-0">
             <p class="font-semibold text-gray-900 truncate group-hover:text-teal-600">{{ p.nombre }}</p>
-            <p class="text-xs text-gray-400">{{ p.total_sesiones }} sesiones</p>
+            <p class="text-sm text-gray-400">{{ p.total_sesiones }} sesiones</p>
           </div>
-          <span v-if="!p.activo" class="ml-auto text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">Inactivo</span>
+          <span v-if="!p.activo" class="ml-auto text-sm bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">Inactivo</span>
         </div>
         <div v-if="p.patologias.length" class="flex flex-wrap gap-1">
           <span
             v-for="pat in p.patologias.slice(0, 3)" :key="pat"
-            class="text-xs bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full"
+            class="text-sm bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full"
           >{{ pat }}</span>
-          <span v-if="p.patologias.length > 3" class="text-xs text-gray-400">+{{ p.patologias.length - 3 }}</span>
+          <span v-if="p.patologias.length > 3" class="text-sm text-gray-400">+{{ p.patologias.length - 3 }}</span>
         </div>
       </RouterLink>
 

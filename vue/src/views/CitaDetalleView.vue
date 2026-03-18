@@ -42,7 +42,7 @@ async function cancelar() {
           <span class="text-sm text-gray-500">Estado:</span>
           <span class="text-sm font-medium px-2 py-0.5 rounded-full"
             :class="{
-              'bg-teal-100 text-teal-700': store.actual.estado === 'programada',
+              'bg-gray-100 text-gray-600': store.actual.estado === 'programada',
               'bg-green-100 text-green-700': store.actual.estado === 'completada',
               'bg-red-100 text-red-700': store.actual.estado === 'cancelada',
               'bg-gray-100 text-gray-600': store.actual.estado === 'no_asistio',

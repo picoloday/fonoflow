@@ -144,6 +144,7 @@ class SesionesController extends BaseApiController
                 'asistio'       => 1,
                 'evolutivo'     => $json['evolutivo']     ?? null,
                 'observaciones' => $json['observaciones'] ?? null,
+                'recuperacion'  => empty($json['recuperacion']) ? 0 : 1,
             ];
         } else {
             $reprogramar = empty($json['reprogramar']) ? 0 : 1;

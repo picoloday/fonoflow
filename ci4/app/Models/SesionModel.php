@@ -12,7 +12,7 @@ class SesionModel extends Model
     protected $allowedFields = [
         'paciente_id', 'cita_id', 'fecha', 'hora_inicio', 'duracion',
         'precio', 'evolutivo', 'observaciones',
-        'estado', 'asistio', 'motivo_ausencia', 'reprogramar', 'sesion_reprogramada_id',
+        'estado', 'asistio', 'motivo_ausencia', 'reprogramar', 'sesion_reprogramada_id', 'recuperacion',
     ];
 
     // -------------------------------------------------------
@@ -31,11 +31,12 @@ class SesionModel extends Model
         $sesiones = $q->findAll();
 
         foreach ($sesiones as &$s) {
-            $s['reprogramar'] = (int) $s['reprogramar'];
-            $s['asistio']     = isset($s['asistio']) ? (int) $s['asistio'] : null;
-            $s['objetivos']   = $this->getObjetivos($s['id']);
-            $s['actividades'] = $this->getActividades($s['id']);
-            $s['materiales']  = $this->getMateriales($s['id']);
+            $s['reprogramar']  = (int) $s['reprogramar'];
+            $s['asistio']      = isset($s['asistio']) ? (int) $s['asistio'] : null;
+            $s['recuperacion'] = (int) ($s['recuperacion'] ?? 0);
+            $s['objetivos']    = $this->getObjetivos($s['id']);
+            $s['actividades']  = $this->getActividades($s['id']);
+            $s['materiales']   = $this->getMateriales($s['id']);
         }
 
         return $sesiones;
@@ -46,16 +47,21 @@ class SesionModel extends Model
     // -------------------------------------------------------
     public function listarDia(string $fecha): array
     {
-        return $this->select('sesiones.*, pacientes.nombre AS paciente_nombre, GROUP_CONCAT(pp.patologia SEPARATOR \', \') AS patologias', false)
-                    ->join('pacientes', 'pacientes.id = sesiones.paciente_id')
-                    ->join('paciente_patologias pp', 'pp.paciente_id = pacientes.id', 'left')
-                    ->where('sesiones.fecha', $fecha)
-                    ->where('sesiones.cita_id IS NULL')
-                    ->where('sesiones.hora_inicio IS NOT NULL')
-                    ->where('sesiones.deleted_at IS NULL')
-                    ->groupBy('sesiones.id')
-                    ->orderBy('sesiones.hora_inicio', 'ASC')
-                    ->findAll();
+        $rows = $this->select('sesiones.*, pacientes.nombre AS paciente_nombre, GROUP_CONCAT(pp.patologia SEPARATOR \', \') AS patologias', false)
+                     ->join('pacientes', 'pacientes.id = sesiones.paciente_id')
+                     ->join('paciente_patologias pp', 'pp.paciente_id = pacientes.id', 'left')
+                     ->where('sesiones.fecha', $fecha)
+                     ->where('sesiones.cita_id IS NULL')
+                     ->where('sesiones.hora_inicio IS NOT NULL')
+                     ->where('sesiones.deleted_at IS NULL')
+                     ->groupBy('sesiones.id')
+                     ->orderBy('sesiones.hora_inicio', 'ASC')
+                     ->findAll();
+
+        foreach ($rows as &$r) {
+            $r['recuperacion'] = (int) ($r['recuperacion'] ?? 0);
+        }
+        return $rows;
     }
 
     // -------------------------------------------------------
@@ -96,8 +102,9 @@ class SesionModel extends Model
         if (!$sesion) return null;
 
         // MySQL devuelve TINYINT como string; castear para que JS no confunda "0" con true
-        $sesion['asistio']     = isset($sesion['asistio'])     ? (int) $sesion['asistio']     : null;
-        $sesion['reprogramar'] = isset($sesion['reprogramar']) ? (int) $sesion['reprogramar'] : 0;
+        $sesion['asistio']      = isset($sesion['asistio'])      ? (int) $sesion['asistio']      : null;
+        $sesion['reprogramar']  = isset($sesion['reprogramar'])  ? (int) $sesion['reprogramar']  : 0;
+        $sesion['recuperacion'] = isset($sesion['recuperacion']) ? (int) $sesion['recuperacion'] : 0;
 
         $sesion['objetivos']   = $this->getObjetivos($id);
         $sesion['actividades'] = $this->getActividades($id);

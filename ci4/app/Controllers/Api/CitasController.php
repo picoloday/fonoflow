@@ -103,40 +103,44 @@ class CitasController extends BaseApiController
             $idsRecuperacion = array_column($rows, 'sesion_reprogramada_id');
         }
 
-        // Índice por hora normalizada (HH:MM) → item
-        $itemPorHora = [];
+        // Índice por hora → array de items (puede haber varias sesiones a la misma hora)
+        $itemsPorHora = [];
         foreach ($citasDia as $c) {
             $h = substr($c['hora_inicio'], 0, 5);
-            $itemPorHora[$h] = $c;
+            $itemsPorHora[$h][] = $c;
         }
         foreach ($sessDia as $s) {
-            $h = substr($s['hora_inicio'], 0, 5);
-            if (!isset($itemPorHora[$h])) {
-                $item = array_merge($s, ['_tipo' => 'sesion']);
-                if (in_array($s['id'], $idsRecuperacion)) {
-                    $item['_recuperacion'] = true;
-                }
-                $itemPorHora[$h] = $item;
+            $item = array_merge($s, ['_tipo' => 'sesion']);
+            if (in_array($s['id'], $idsRecuperacion)) {
+                $item['_recuperacion'] = true;
             }
+            $h = substr($s['hora_inicio'], 0, 5);
+            $itemsPorHora[$h][] = $item;
         }
 
-        // Horas bloqueadas por la duración de cada item (solo sesiones activas)
+        // Horas bloqueadas por sesiones activas (solo programada/completada)
         $estadosQueOcupan = ['programada', 'completada'];
         $horasBloqueadas  = [];
-        foreach ($itemPorHora as $h => $item) {
-            if (!in_array($item['estado'] ?? '', $estadosQueOcupan)) continue;
-            $start = $toMin($h);
-            $dur   = (int)($item['duracion'] ?? 0);
-            for ($m = $start + CitaModel::INTERVALO; $m < $start + $dur; $m += CitaModel::INTERVALO) {
-                $horasBloqueadas[$toHora($m)] = true;
+        foreach ($itemsPorHora as $h => $items) {
+            foreach ($items as $item) {
+                if (!in_array($item['estado'] ?? '', $estadosQueOcupan)) continue;
+                $start = $toMin($h);
+                $dur   = (int)($item['duracion'] ?? 0);
+                for ($m = $start + CitaModel::INTERVALO; $m < $start + $dur; $m += CitaModel::INTERVALO) {
+                    $horasBloqueadas[$toHora($m)] = true;
+                }
             }
         }
 
-        // Solo sesiones reales (no null): la vista ya no muestra slots vacíos
-        foreach ($itemPorHora as $h => $item) {
-            $slots[$h] = $item;
+        // Construir slots: cada hora → array de sesiones (aplanado para el frontend)
+        foreach ($itemsPorHora as $h => $items) {
+            if (isset($horasBloqueadas[$h])) continue;
+            foreach ($items as $item) {
+                $slots[] = array_merge($item, ['_hora' => $h]);
+            }
         }
-        ksort($slots);
+        // Ordenar por hora
+        usort($slots, fn($a, $b) => strcmp($a['_hora'], $b['_hora']));
 
         return $this->ok([
             'today'        => $today,

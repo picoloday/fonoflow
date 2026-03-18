@@ -204,7 +204,7 @@ function inputClass(campo) {
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Nombre completo *</label>
           <input v-model="form.nombre" type="text" @input="revalidarCampo" :class="inputClass('nombre')"/>
-          <p v-if="errores.nombre" class="text-xs text-red-600 mt-1">{{ errores.nombre }}</p>
+          <p v-if="errores.nombre" class="text-sm text-red-600 mt-1">{{ errores.nombre }}</p>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
@@ -212,7 +212,7 @@ function inputClass(campo) {
             <label class="block text-sm font-medium text-gray-700 mb-1">Fecha de nacimiento</label>
             <input v-model="form.fecha_nacimiento" type="date" @change="revalidarCampo"
               :class="inputClass('fecha_nacimiento')"/>
-            <p v-if="errores.fecha_nacimiento" class="text-xs text-red-600 mt-1">{{ errores.fecha_nacimiento }}</p>
+            <p v-if="errores.fecha_nacimiento" class="text-sm text-red-600 mt-1">{{ errores.fecha_nacimiento }}</p>
           </div>
           <div class="flex items-end">
             <div v-if="edad !== null"
@@ -245,7 +245,7 @@ function inputClass(campo) {
         <p v-else class="text-sm text-gray-400 italic">No hay patologías en el catálogo todavía.</p>
 
         <div class="pt-2 border-t border-gray-100">
-          <label class="block text-xs text-gray-500 mb-1">Nueva patología al catálogo</label>
+          <label class="block text-sm text-gray-500 mb-1">Nueva patología al catálogo</label>
           <div class="flex gap-2">
             <input v-model="nuevaPatologia" type="text" placeholder="Ej: Dislexia, TEA, Disfemia..."
               @keydown.enter.prevent="agregarNuevaPatologia"
@@ -256,7 +256,7 @@ function inputClass(campo) {
               {{ addingPat ? '...' : '+ Añadir' }}
             </button>
           </div>
-          <p v-if="errorPat" class="text-xs text-red-600 mt-1">{{ errorPat }}</p>
+          <p v-if="errorPat" class="text-sm text-red-600 mt-1">{{ errorPat }}</p>
         </div>
       </section>
 
@@ -264,7 +264,7 @@ function inputClass(campo) {
       <section class="bg-white shadow-sm rounded-xl p-6 space-y-3">
         <div class="flex items-center justify-between">
           <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Objetivos generales</h2>
-          <button type="button" @click="addObj" class="text-xs text-teal-600 hover:text-teal-700 font-medium">
+          <button type="button" @click="addObj" class="text-sm text-teal-600 hover:text-teal-700 font-medium">
             + Añadir objetivo
           </button>
         </div>
@@ -303,13 +303,13 @@ function inputClass(campo) {
             <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <input v-model="form.email" type="text" @input="revalidarCampo" :class="inputClass('email')"
               placeholder="ejemplo@correo.com"/>
-            <p v-if="errores.email" class="text-xs text-red-600 mt-1">{{ errores.email }}</p>
+            <p v-if="errores.email" class="text-sm text-red-600 mt-1">{{ errores.email }}</p>
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
             <input v-model="form.telefono" type="text" @input="revalidarCampo" :class="inputClass('telefono')"
               placeholder="+34 600 000 000"/>
-            <p v-if="errores.telefono" class="text-xs text-red-600 mt-1">{{ errores.telefono }}</p>
+            <p v-if="errores.telefono" class="text-sm text-red-600 mt-1">{{ errores.telefono }}</p>
           </div>
         </div>
       </section>
@@ -318,7 +318,7 @@ function inputClass(campo) {
       <section class="bg-white shadow-sm rounded-xl p-6 space-y-4">
         <div>
           <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Horario habitual</h2>
-          <p class="text-xs text-gray-400 mt-0.5">Cada día puede tener su propia hora y duración.</p>
+          <p class="text-sm text-gray-400 mt-0.5">Cada día puede tener su propia hora y duración.</p>
         </div>
 
         <!-- Círculos de días -->

@@ -23,14 +23,32 @@ async function cargar() {
 
 const agenda = computed(() => store.agenda)
 
-// Solo sesiones reales, en orden, sin slots vacíos ni intermedios
+// slots llega como array plano ordenado por _hora; agrupa por hora para mostrar juntas
 const sesionesDelDia = computed(() => {
   const slots = agenda.value?.slots
   if (!slots) return []
-  return Object.entries(slots)
-    .filter(([, cita]) => cita && cita.paciente_nombre)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([hora, cita]) => ({ hora, cita }))
+  let items
+  if (!Array.isArray(slots)) {
+    items = Object.entries(slots)
+      .filter(([, c]) => c && c.paciente_nombre)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([hora, cita]) => ({ hora, cita }))
+  } else {
+    items = slots
+      .filter(s => s && s.paciente_nombre)
+      .map(s => ({ hora: s._hora, cita: s }))
+  }
+  // Agrupar por hora
+  const grupos = []
+  const idx = {}
+  for (const { hora, cita } of items) {
+    if (idx[hora] === undefined) {
+      idx[hora] = grupos.length
+      grupos.push({ hora, citas: [] })
+    }
+    grupos[idx[hora]].citas.push(cita)
+  }
+  return grupos
 })
 
 function cardColor(cita) {
@@ -104,7 +122,7 @@ const mesNombre = computed(() => {
 
         <!-- Cabecera días -->
         <div class="grid grid-cols-7 mb-1">
-          <div v-for="d in diasSemana" :key="d" class="text-center text-xs text-gray-400 font-medium py-1">{{ d }}</div>
+          <div v-for="d in diasSemana" :key="d" class="text-center text-sm text-gray-400 font-medium py-1">{{ d }}</div>
         </div>
 
         <!-- Días -->
@@ -112,7 +130,7 @@ const mesNombre = computed(() => {
           <button
             v-for="dia in agenda.cal_dias" :key="dia"
             @click="fecha = dia"
-            class="relative aspect-square flex flex-col items-center justify-center text-xs rounded-lg transition-colors"
+            class="relative aspect-square flex flex-col items-center justify-center text-sm rounded-lg transition-colors"
             :class="[
               dia === fecha ? 'bg-teal-600 text-white font-bold' :
               dia === hoy   ? 'bg-teal-50 text-teal-700 font-semibold' :
@@ -145,7 +163,7 @@ const mesNombre = computed(() => {
           <h2 class="font-semibold text-gray-700 text-sm">
             {{ new Date(fecha + 'T12:00:00').toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' }) }}
           </h2>
-          <input type="date" v-model="fecha" class="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-teal-500" />
+          <input type="date" v-model="fecha" class="text-sm border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-teal-500" />
         </div>
 
         <div v-if="store.loading" class="p-5 space-y-3">
@@ -156,22 +174,30 @@ const mesNombre = computed(() => {
         </div>
 
         <div v-else-if="sesionesDelDia.length" class="divide-y divide-gray-100 max-h-[600px] overflow-y-auto">
-          <div v-for="{ hora, cita } in sesionesDelDia" :key="hora" class="flex gap-3 px-5 py-2 items-start">
-            <span class="text-xs text-gray-400 font-mono w-11 flex-shrink-0 pt-3">{{ hora }}</span>
-            <RouterLink
-              :to="cita._tipo === 'sesion' ? `/sesiones/${cita.id}` : `/citas/${cita.id}`"
-              class="flex-1 rounded-lg px-4 text-sm transition-colors hover:opacity-90"
-              :class="[cardColor(cita), parseInt(cita.duracion) >= 60 ? 'py-5' : 'py-2.5']"
-            >
-              <div class="flex items-center justify-between">
-                <p class="font-semibold text-gray-900">{{ cita.paciente_nombre }}</p>
-                <span class="text-xs px-2 py-0.5 rounded-full font-medium ml-2 shrink-0" :class="badgeColor(cita)">
-                  {{ labelCita(cita) }}
-                </span>
-              </div>
-              <p v-if="cita.patologias" class="text-xs text-gray-500 mt-0.5 truncate">{{ cita.patologias }}</p>
-              <p class="text-xs text-gray-400 mt-0.5">{{ cita.duracion }} min</p>
-            </RouterLink>
+          <div v-for="{ hora, citas } in sesionesDelDia" :key="hora" class="flex gap-3 px-5 py-2 items-start">
+            <span class="text-sm text-gray-400 font-mono w-11 flex-shrink-0 pt-3">{{ hora }}</span>
+            <div class="flex-1 flex flex-col gap-2">
+              <RouterLink
+                v-for="cita in citas" :key="cita.id"
+                :to="cita._tipo === 'sesion' ? `/sesiones/${cita.id}` : `/citas/${cita.id}`"
+                class="block rounded-lg px-4 text-sm transition-colors hover:opacity-90"
+                :class="[cardColor(cita), parseInt(cita.duracion) >= 60 ? 'py-5' : 'py-2.5']"
+              >
+                <div class="flex items-center justify-between">
+                  <p class="font-semibold text-gray-900">{{ cita.paciente_nombre }}</p>
+                  <div class="flex flex-col items-end gap-0.5 ml-2 shrink-0">
+                    <span class="text-sm px-2 py-0.5 rounded-full font-medium" :class="badgeColor(cita)">
+                      {{ labelCita(cita) }}
+                    </span>
+                    <span v-if="cita.recuperacion" class="text-sm px-2 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700">
+                      Recuperación
+                    </span>
+                  </div>
+                </div>
+                <p v-if="cita.patologias" class="text-sm text-gray-500 mt-0.5 truncate">{{ cita.patologias }}</p>
+                <p class="text-sm text-gray-400 mt-0.5">{{ cita.duracion }} min</p>
+              </RouterLink>
+            </div>
           </div>
         </div>
 

@@ -12,7 +12,7 @@ const nav = [
   { name: 'dashboard', label: 'Inicio',    path: '/' },
   { name: 'agenda',    label: 'Agenda',    path: '/agenda' },
   { name: 'pacientes', label: 'Pacientes', path: '/pacientes' },
-  { name: 'sesiones',  label: 'Sesiones',  path: '/sesiones' },
+  { name: 'sesiones',  label: 'Facturación',  path: '/sesiones' },
 ]
 
 const isActive = (path) =>

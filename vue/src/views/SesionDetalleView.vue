@@ -12,6 +12,7 @@ const evolutivo      = ref('')
 const observaciones  = ref('')
 const motivoAusencia = ref('')
 const reprogramar    = ref(false)
+const recuperacion   = ref(false)
 const guardando      = ref(false)
 const errorMsg       = ref('')
 
@@ -31,7 +32,7 @@ const estadoBadge = computed(() => {
   if (e === 'completada')   return { text: 'Completada',   cls: 'bg-green-100 text-green-700' }
   if (e === 'cancelada')    return { text: 'No asiste',    cls: 'bg-red-100 text-red-700' }
   if (e === 'reprogramada') return { text: 'Reprogramada', cls: 'bg-amber-100 text-amber-700' }
-  return { text: 'Programada', cls: 'bg-teal-100 text-teal-700' }
+  return { text: 'Programada', cls: 'bg-gray-100 text-gray-600' }
 })
 
 async function toggle(objId) {
@@ -47,6 +48,7 @@ async function guardarCompletar() {
         asistio:       true,
         evolutivo:     evolutivo.value,
         observaciones: observaciones.value,
+        recuperacion:  recuperacion.value,
       })
     } else {
       if (!motivoAusencia.value.trim()) {
@@ -81,7 +83,7 @@ async function guardarCompletar() {
 
       <!-- Cabecera -->
       <div class="flex items-start gap-3 mb-6">
-        <RouterLink to="/sesiones" class="mt-1 text-gray-400 hover:text-gray-600 flex-shrink-0">
+        <RouterLink to="/agenda" class="mt-1 text-gray-400 hover:text-gray-600 flex-shrink-0">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
           </svg>
@@ -92,12 +94,12 @@ async function guardarCompletar() {
               :to="`/pacientes/${sesion.paciente_real_id || sesion.paciente_id}`"
               class="text-xl font-bold text-gray-900 hover:text-teal-600 transition-colors"
             >{{ sesion.paciente?.nombre || sesion.paciente_nombre }}</RouterLink>
-            <span :class="['text-xs font-medium px-2.5 py-0.5 rounded-full', estadoBadge.cls]">
+            <span :class="['text-sm font-medium px-2.5 py-0.5 rounded-full', estadoBadge.cls]">
               {{ estadoBadge.text }}
             </span>
             <RouterLink v-if="sesion.estado === 'programada'"
               :to="`/sesiones/${sesion.id}/editar`"
-              class="ml-auto text-xs px-3 py-1 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 flex items-center gap-1">
+              class="ml-auto text-sm px-3 py-1 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 flex items-center gap-1">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H9v-2a2 2 0 01.586-1.414z"/>
               </svg>
@@ -120,7 +122,7 @@ async function guardarCompletar() {
           class="bg-white shadow-sm rounded-xl overflow-hidden">
           <div class="px-5 py-3 border-b bg-gray-50">
             <h2 class="font-semibold text-sm text-gray-700">Objetivos planificados</h2>
-            <p class="text-xs text-gray-400 mt-0.5">Se marcarán como conseguidos al completar la sesión</p>
+            <p class="text-sm text-gray-400 mt-0.5">Se marcarán como conseguidos al completar la sesión</p>
           </div>
           <ul class="divide-y divide-gray-100">
             <li v-for="obj in sesion.objetivos" :key="obj.id"
@@ -136,7 +138,7 @@ async function guardarCompletar() {
           class="bg-white shadow-sm rounded-xl overflow-hidden">
           <div class="px-5 py-3 border-b bg-gray-50 flex items-center justify-between">
             <h2 class="font-semibold text-sm text-gray-700">Objetivos</h2>
-            <span class="text-xs text-teal-600 font-medium">{{ progreso }}%</span>
+            <span class="text-sm text-teal-600 font-medium">{{ progreso }}%</span>
           </div>
           <div class="px-5 pt-3 pb-1">
             <div class="w-full bg-gray-200 rounded-full h-1.5">
@@ -155,7 +157,7 @@ async function guardarCompletar() {
               <span class="text-sm" :class="obj.cumplido ? 'text-gray-500 line-through' : 'text-gray-700'">
                 {{ obj.objetivo }}
               </span>
-              <span v-if="!obj.cumplido" class="ml-auto text-xs text-gray-400">No conseguido</span>
+              <span v-if="!obj.cumplido" class="ml-auto text-sm text-gray-400">No conseguido</span>
             </li>
           </ul>
         </div>
@@ -166,27 +168,33 @@ async function guardarCompletar() {
             <h2 class="font-semibold text-sm text-gray-700 mb-2">Actividades</h2>
             <div class="flex flex-wrap gap-1.5">
               <span v-for="a in sesion.actividades" :key="a"
-                class="text-xs px-2.5 py-1 bg-teal-50 text-teal-700 rounded-full border border-teal-200">{{ a }}</span>
+                class="text-sm px-2.5 py-1 bg-teal-50 text-teal-700 rounded-full border border-teal-200">{{ a }}</span>
             </div>
           </div>
           <div v-if="sesion.materiales?.length" class="bg-white shadow-sm rounded-xl p-5">
             <h2 class="font-semibold text-sm text-gray-700 mb-2">Materiales</h2>
             <div class="flex flex-wrap gap-1.5">
               <span v-for="m in sesion.materiales" :key="m"
-                class="text-xs px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-full border border-indigo-200">{{ m }}</span>
+                class="text-sm px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-full border border-indigo-200">{{ m }}</span>
             </div>
           </div>
         </div>
 
         <!-- ── COMPLETADA: notas clínicas ── -->
         <div v-if="sesion.estado === 'completada'" class="bg-white shadow-sm rounded-xl p-5 space-y-3">
-          <h2 class="font-semibold text-sm text-gray-700">Notas clínicas</h2>
+          <div class="flex items-center gap-3">
+            <h2 class="font-semibold text-sm text-gray-700">Notas clínicas</h2>
+            <span v-if="sesion.recuperacion == 1"
+              class="text-sm px-2.5 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700">
+              Recuperación
+            </span>
+          </div>
           <div v-if="sesion.evolutivo">
-            <p class="text-xs text-gray-500 mb-1">Evolutivo</p>
+            <p class="text-sm text-gray-500 mb-1">Evolutivo</p>
             <p class="text-sm text-gray-700 whitespace-pre-line">{{ sesion.evolutivo }}</p>
           </div>
           <div v-if="sesion.observaciones">
-            <p class="text-xs text-gray-500 mb-1">Observaciones</p>
+            <p class="text-sm text-gray-500 mb-1">Observaciones</p>
             <p class="text-sm text-gray-700 whitespace-pre-line">{{ sesion.observaciones }}</p>
           </div>
           <p v-if="!sesion.evolutivo && !sesion.observaciones" class="text-sm text-gray-400 italic">
@@ -201,14 +209,15 @@ async function guardarCompletar() {
           <p v-if="sesion.motivo_ausencia" class="text-sm text-red-600">
             <span class="font-medium">Motivo:</span> {{ sesion.motivo_ausencia }}
           </p>
-          <span v-if="sesion.reprogramar"
-            class="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-amber-100 text-amber-700 rounded-full border border-amber-300">
+          <RouterLink v-if="sesion.reprogramar"
+            :to="`/sesiones/nueva?paciente=${sesion.paciente_real_id || sesion.paciente_id}`"
+            class="inline-flex items-center gap-1 text-sm px-2.5 py-1 bg-amber-100 text-amber-700 rounded-full border border-amber-300 hover:bg-amber-200 transition-colors">
             <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
             </svg>
-            Pendiente de reprogramar
-          </span>
-          <span v-else class="text-xs text-gray-500 italic">No se reprogramará</span>
+            Pendiente de reprogramar · Crear nueva sesión
+          </RouterLink>
+          <span v-else class="text-sm text-gray-500 italic">No se reprogramará</span>
         </div>
 
         <!-- ── REPROGRAMADA: link a la nueva sesión ── -->
@@ -220,7 +229,7 @@ async function guardarCompletar() {
           </p>
           <RouterLink v-if="sesion.sesion_reprogramada"
             :to="`/sesiones/${sesion.sesion_reprogramada.id}`"
-            class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 bg-white text-teal-700 rounded-full border border-teal-300 hover:bg-teal-50 transition-colors">
+            class="inline-flex items-center gap-1.5 text-sm px-2.5 py-1 bg-white text-teal-700 rounded-full border border-teal-300 hover:bg-teal-50 transition-colors">
             <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
             </svg>
@@ -233,7 +242,7 @@ async function guardarCompletar() {
           class="bg-white shadow-sm rounded-xl overflow-hidden">
           <div class="px-5 py-3 bg-blue-50 border-b border-blue-100">
             <h2 class="font-semibold text-sm text-blue-800">Completar sesión</h2>
-            <p class="text-xs text-blue-600 mt-0.5">¿Cómo fue la sesión?</p>
+            <p class="text-sm text-blue-600 mt-0.5">¿Cómo fue la sesión?</p>
           </div>
 
           <!-- Selector -->
@@ -282,7 +291,7 @@ async function guardarCompletar() {
                     :class="obj.cumplido ? 'text-gray-400 line-through' : 'text-gray-700'">
                     {{ obj.objetivo }}
                   </span>
-                  <span class="text-xs" :class="obj.cumplido ? 'text-teal-600 font-medium' : 'text-gray-400'">
+                  <span class="text-sm" :class="obj.cumplido ? 'text-teal-600 font-medium' : 'text-gray-400'">
                     {{ obj.cumplido ? '✓ Conseguido' : 'Pulsa para marcar' }}
                   </span>
                 </li>
@@ -302,6 +311,12 @@ async function guardarCompletar() {
                 placeholder="Comunicaciones con la familia, notas internas..."
                 class="block w-full border border-gray-300 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"/>
             </div>
+
+            <label class="flex items-center gap-3 cursor-pointer select-none">
+              <input v-model="recuperacion" type="checkbox"
+                class="w-4 h-4 rounded border-gray-300 text-amber-500 focus:ring-amber-400"/>
+              <span class="text-sm text-gray-700">Esta sesión es una recuperación</span>
+            </label>
 
             <div v-if="errorMsg" class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ errorMsg }}</div>
             <button @click="guardarCompletar" :disabled="guardando"
