@@ -16,6 +16,54 @@ class SesionModel extends Model
     ];
 
     // -------------------------------------------------------
+    // Resumen de meses (solo totales, sin cargar sesiones)
+    // -------------------------------------------------------
+    public function resumenMeses(?int $pacienteId = null): array
+    {
+        $q = $this->db->table('sesiones')
+            ->select("DATE_FORMAT(fecha, '%Y-%m') AS mes,
+                      COUNT(*) AS total,
+                      SUM(CASE WHEN estado = 'completada' THEN precio ELSE 0 END) AS ingresos")
+            ->where('deleted_at IS NULL')
+            ->groupBy("DATE_FORMAT(fecha, '%Y-%m')")
+            ->orderBy('mes', 'DESC');
+
+        if ($pacienteId) $q->where('paciente_id', $pacienteId);
+
+        return $q->get()->getResultArray();
+    }
+
+    // -------------------------------------------------------
+    // Sesiones de un mes concreto, ligeras (sin objetivos/actividades)
+    // -------------------------------------------------------
+    public function listarMesLigero(string $mes, ?int $pacienteId = null): array
+    {
+        $inicio = $mes . '-01';
+        $fin    = date('Y-m-t', strtotime($inicio));
+
+        $q = $this->db->table('sesiones')
+            ->select('sesiones.id, sesiones.fecha, sesiones.hora_inicio, sesiones.duracion,
+                      sesiones.precio, sesiones.estado, sesiones.reprogramar,
+                      pacientes.nombre AS paciente_nombre')
+            ->join('pacientes', 'pacientes.id = sesiones.paciente_id')
+            ->where('sesiones.fecha >=', $inicio)
+            ->where('sesiones.fecha <=', $fin)
+            ->where('sesiones.deleted_at IS NULL')
+            ->orderBy('sesiones.fecha', 'DESC')
+            ->orderBy('sesiones.hora_inicio', 'DESC');
+
+        if ($pacienteId) $q->where('sesiones.paciente_id', $pacienteId);
+
+        $rows = $q->get()->getResultArray();
+
+        foreach ($rows as &$r) {
+            $r['reprogramar'] = (int) ($r['reprogramar'] ?? 0);
+        }
+
+        return $rows;
+    }
+
+    // -------------------------------------------------------
     // Listar sesiones con nombre de paciente
     // -------------------------------------------------------
     public function listar(?int $pacienteId = null, ?string $fecha = null): array

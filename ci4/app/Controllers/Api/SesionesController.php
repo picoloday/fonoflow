@@ -26,28 +26,30 @@ class SesionesController extends BaseApiController
 
     public function index()
     {
-        $pacienteId = $this->request->getGet('paciente_id');
-        $sesiones   = $this->model->listar($pacienteId ? (int)$pacienteId : null);
+        $pacienteId = $this->request->getGet('paciente_id') ? (int)$this->request->getGet('paciente_id') : null;
+        $mes        = $this->request->getGet('mes');
 
-        // Agrupar por mes (útil para la vista de listado)
-        $porMes        = [];
-        $totalIngresos = 0;
-        foreach ($sesiones as $s) {
-            $mes = substr($s['fecha'], 0, 7);
-            if (!isset($porMes[$mes])) {
-                $porMes[$mes] = ['sesiones' => [], 'ingresos' => 0.0];
+        // ── Modo detalle de un mes ──────────────────────────────
+        if ($mes) {
+            $sesiones = $this->model->listarMesLigero($mes, $pacienteId);
+            $porDia   = [];
+            $ingresos = 0.0;
+            foreach ($sesiones as $s) {
+                $porDia[$s['fecha']][] = $s;
+                if ($s['estado'] === 'completada') $ingresos += (float)$s['precio'];
             }
-            $porMes[$mes]['sesiones'][] = $s;
-            $ingreso = $s['estado'] === 'completada' ? (float)$s['precio'] : 0.0;
-            $porMes[$mes]['ingresos']  += $ingreso;
-            $totalIngresos             += $ingreso;
+            return $this->ok(['mes' => $mes, 'por_dia' => $porDia, 'ingresos' => $ingresos]);
         }
-        krsort($porMes);
+
+        // ── Modo resumen: solo totales por mes ──────────────────
+        $meses         = $this->model->resumenMeses($pacienteId);
+        $totalSesiones = array_sum(array_column($meses, 'total'));
+        $totalIngresos = array_sum(array_column($meses, 'ingresos'));
 
         return $this->ok([
-            'por_mes'        => $porMes,
-            'total_sesiones' => count($sesiones),
-            'total_ingresos' => $totalIngresos,
+            'meses'          => $meses,
+            'total_sesiones' => (int)$totalSesiones,
+            'total_ingresos' => (float)$totalIngresos,
         ]);
     }
 

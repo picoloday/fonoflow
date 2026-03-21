@@ -3,15 +3,28 @@ import { ref } from 'vue'
 import * as api from '@/api/sesiones'
 
 export const useSesionesStore = defineStore('sesiones', () => {
-  const lista   = ref({ por_mes: {}, total_sesiones: 0, total_ingresos: 0 })
-  const actual  = ref(null)
-  const loading = ref(false)
+  const resumen       = ref({ meses: [], total_sesiones: 0, total_ingresos: 0 })
+  const detallesMes   = ref({}) // { 'YYYY-MM': { por_dia, ingresos } }
+  const cargandoMes   = ref({}) // { 'YYYY-MM': true }
+  const actual        = ref(null)
+  const loading       = ref(false)
 
-  async function cargar(params) {
+  async function cargar() {
     loading.value = true
-    const { data } = await api.getSesiones(params)
-    lista.value = data.data
+    const { data } = await api.getSesiones()
+    resumen.value = data.data
     loading.value = false
+  }
+
+  async function cargarMes(mes) {
+    if (detallesMes.value[mes] || cargandoMes.value[mes]) return
+    cargandoMes.value[mes] = true
+    try {
+      const { data } = await api.getSesiones({ mes })
+      detallesMes.value[mes] = data.data
+    } finally {
+      cargandoMes.value[mes] = false
+    }
   }
 
   async function cargarUna(id) {
@@ -52,5 +65,5 @@ export const useSesionesStore = defineStore('sesiones', () => {
     return data.data
   }
 
-  return { lista, actual, loading, cargar, cargarUna, crear, editar, toggleObjetivo, completar, borrar, toggleReprogramar }
+  return { resumen, detallesMes, cargandoMes, actual, loading, cargar, cargarMes, cargarUna, crear, editar, toggleObjetivo, completar, borrar, toggleReprogramar }
 })
