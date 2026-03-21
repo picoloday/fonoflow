@@ -16,13 +16,15 @@ const DIAS = [
   { n: 4, label: 'J' }, { n: 5, label: 'V' }, { n: 6, label: 'S' },
 ]
 
-const horasDisponibles = (() => {
+function horasDisponibles(dia) {
+  const horaIni = dia === 6 ? 9  : 15
+  const horaFin = dia === 6 ? 14 : 21
   const slots = []
-  for (let h = 15; h < 21; h++)
+  for (let h = horaIni; h < horaFin; h++)
     for (let m = 0; m < 60; m += 15)
       slots.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`)
   return slots
-})()
+}
 
 const form = ref({
   nombre: '', fecha_nacimiento: '',
@@ -342,7 +344,7 @@ function inputClass(campo) {
             <select v-model="entrada.hora"
               class="border border-gray-300 rounded-lg py-1.5 px-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
               <option value="">— Hora —</option>
-              <option v-for="h in horasDisponibles" :key="h" :value="h">{{ h }}</option>
+              <option v-for="h in horasDisponibles(entrada.dia)" :key="h" :value="h">{{ h }}</option>
             </select>
             <select v-model="entrada.duracion"
               class="border border-gray-300 rounded-lg py-1.5 px-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">

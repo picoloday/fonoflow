@@ -32,16 +32,20 @@ const form = ref({
 const error   = ref('')
 const loading = ref(false)
 
-// Genera slots de hora de 15:00 a 20:45 cada 15 min
-const horasDisponibles = (() => {
+// Genera slots según día: sábado 09:00–14:00, resto 15:00–21:00
+const horasDisponibles = computed(() => {
+  const [y, m, d] = (form.value.fecha || '').split('-').map(Number)
+  const esSabado = y ? new Date(y, m - 1, d).getDay() === 6 : false
+  const horaIni = esSabado ? 9  : 15
+  const horaFin = esSabado ? 14 : 21
   const slots = []
-  for (let h = 15; h < 21; h++) {
-    for (let m = 0; m < 60; m += 15) {
-      slots.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`)
+  for (let h = horaIni; h < horaFin; h++) {
+    for (let min = 0; min < 60; min += 15) {
+      slots.push(`${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')}`)
     }
   }
   return slots
-})()
+})
 
 const nuevaMaterial  = ref(''); const addingMat = ref(false); const errorMat = ref('')
 const nuevaActividad = ref(''); const addingAct = ref(false); const errorAct = ref('')

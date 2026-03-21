@@ -14,9 +14,10 @@ namespace App\Controllers\Api;
 class CatalogoController extends BaseApiController
 {
     private static array $tablas = [
-        'patologias' => 'cat_patologias',
-        'materiales' => 'cat_materiales',
-        'actividades' => 'cat_actividades',
+        'patologias'       => 'cat_patologias',
+        'materiales'       => 'cat_materiales',
+        'actividades'      => 'cat_actividades',
+        'motivos_ausencia' => 'cat_motivos_ausencia',
     ];
 
     public function index(string $tipo)

@@ -117,7 +117,11 @@ class SesionesController extends BaseApiController
 
     public function delete(int $id)
     {
-        if (!$this->model->obtener($id)) return $this->notFound('Sesión no encontrada');
+        $sesion = $this->model->obtener($id);
+        if (!$sesion) return $this->notFound('Sesión no encontrada');
+        if ($sesion['estado'] !== 'programada') {
+            return $this->error('Solo se pueden eliminar sesiones programadas');
+        }
         $this->model->eliminar($id);
         return $this->noContent();
     }
@@ -225,6 +229,58 @@ class SesionesController extends BaseApiController
         $lista    = array_unique(array_merge($catalogo, $enUso));
         sort($lista);
         return $this->ok($lista);
+    }
+
+    public function motivos()
+    {
+        $catalogo = array_column(
+            $this->db->table('cat_motivos_ausencia')->where('activo', 1)->orderBy('nombre')->get()->getResultArray(),
+            'nombre'
+        );
+        $enUso = array_column(
+            $this->db->table('sesiones')
+                ->select('motivo_ausencia')
+                ->where('motivo_ausencia IS NOT NULL')
+                ->where('motivo_ausencia !=', '')
+                ->where('deleted_at IS NULL')
+                ->groupBy('motivo_ausencia')
+                ->orderBy('motivo_ausencia')
+                ->get()->getResultArray(),
+            'motivo_ausencia'
+        );
+        $lista = array_unique(array_merge($catalogo, $enUso));
+        sort($lista);
+        return $this->ok($lista);
+    }
+
+    public function toggleReprogramar(int $id)
+    {
+        $sesion = $this->model->obtener($id);
+        if (!$sesion) return $this->notFound('Sesión no encontrada');
+
+        if ($sesion['estado'] === 'cancelada') {
+            // Alternar el flag reprogramar
+            $nuevoValor = $sesion['reprogramar'] ? 0 : 1;
+            $this->model->actualizar($id, ['reprogramar' => $nuevoValor]);
+
+        } elseif ($sesion['estado'] === 'reprogramada') {
+            // Deshacer: borrar la sesión nueva y revertir esta a cancelada
+            $idNueva = $sesion['sesion_reprogramada_id'] ?? null;
+            if ($idNueva) {
+                $this->model->eliminar((int)$idNueva);
+            }
+            // Usar query directa porque CI4 omite NULL en update()
+            $this->db->table('sesiones')->where('id', $id)->update([
+                'estado'                 => 'cancelada',
+                'reprogramar'            => 0,
+                'sesion_reprogramada_id' => null,
+            ]);
+
+        } else {
+            return $this->error('Solo se puede modificar el estado de reprogramación en sesiones canceladas o reprogramadas');
+        }
+
+        return $this->ok($this->model->obtener($id));
     }
 
     // -------------------------------------------------------

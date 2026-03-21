@@ -41,5 +41,16 @@ export const useSesionesStore = defineStore('sesiones', () => {
     return data.data
   }
 
-  return { lista, actual, loading, cargar, cargarUna, crear, editar, toggleObjetivo, completar }
+  async function borrar(id) {
+    await api.borrarSesion(id)
+    actual.value = null
+  }
+
+  async function toggleReprogramar(id) {
+    const { data } = await api.toggleReprogramar(id)
+    actual.value = data.data
+    return data.data
+  }
+
+  return { lista, actual, loading, cargar, cargarUna, crear, editar, toggleObjetivo, completar, borrar, toggleReprogramar }
 })

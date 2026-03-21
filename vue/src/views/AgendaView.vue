@@ -196,6 +196,10 @@ const mesNombre = computed(() => {
                 </div>
                 <p v-if="cita.patologias" class="text-sm text-gray-500 mt-0.5 truncate">{{ cita.patologias }}</p>
                 <p class="text-sm text-gray-400 mt-0.5">{{ cita.duracion }} min</p>
+                <p v-if="cita.estado === 'cancelada'" class="text-xs mt-0.5 font-medium"
+                  :class="cita.reprogramar ? 'text-amber-600' : 'text-gray-400'">
+                  {{ cita.reprogramar ? 'Reprogramar' : 'No reprogramar' }}
+                </p>
               </RouterLink>
             </div>
           </div>

@@ -14,9 +14,21 @@ class CitaModel extends Model
         'precio', 'estado', 'motivo_ausencia', 'reprogramar', 'notas',
     ];
 
-    const HORA_INICIO  = '15:00';
-    const HORA_FIN     = '21:00';
-    const INTERVALO    = 15; // minutos
+    const HORA_INICIO      = '15:00';
+    const HORA_FIN         = '21:00';
+    const HORA_INICIO_SAB  = '09:00';
+    const HORA_FIN_SAB     = '14:00';
+    const INTERVALO        = 15; // minutos
+
+    public static function horaInicio(string $fecha): string
+    {
+        return date('N', strtotime($fecha)) == 6 ? self::HORA_INICIO_SAB : self::HORA_INICIO;
+    }
+
+    public static function horaFin(string $fecha): string
+    {
+        return date('N', strtotime($fecha)) == 6 ? self::HORA_FIN_SAB : self::HORA_FIN;
+    }
 
     // -------------------------------------------------------
     // Listar citas (con datos del paciente)
@@ -159,8 +171,8 @@ class CitaModel extends Model
     {
         // Generar todos los slots del día
         $todos = [];
-        $inicio = strtotime(self::HORA_INICIO);
-        $fin    = strtotime(self::HORA_FIN);
+        $inicio = strtotime(self::horaInicio($fecha));
+        $fin    = strtotime(self::horaFin($fecha));
 
         for ($t = $inicio; $t < $fin; $t += self::INTERVALO * 60) {
             $todos[] = date('H:i', $t);

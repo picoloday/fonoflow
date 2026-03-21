@@ -86,8 +86,8 @@ class CitasController extends BaseApiController
             return sprintf('%02d:%02d', intdiv($min, 60), $min % 60);
         };
 
-        $inicioMin = $toMin(CitaModel::HORA_INICIO);
-        $finMin    = $toMin(CitaModel::HORA_FIN);
+        $inicioMin = $toMin(CitaModel::horaInicio($fecha));
+        $finMin    = $toMin(CitaModel::horaFin($fecha));
 
         // Detectar sesiones de recuperación: sesiones cuyo ID aparece como
         // sesion_reprogramada_id en otra sesión con estado='reprogramada'
@@ -151,8 +151,8 @@ class CitasController extends BaseApiController
             'cal_dias'     => $calDias,
             'citas_por_dia'=> $citasPorDia,
             'slots'        => $slots,
-            'hora_inicio'  => CitaModel::HORA_INICIO,
-            'hora_fin'     => CitaModel::HORA_FIN,
+            'hora_inicio'  => CitaModel::horaInicio($fecha),
+            'hora_fin'     => CitaModel::horaFin($fecha),
             'estados'      => AppConfig::$estados,
         ]);
     }

@@ -60,6 +60,7 @@ class SesionModel extends Model
 
         foreach ($rows as &$r) {
             $r['recuperacion'] = (int) ($r['recuperacion'] ?? 0);
+            $r['reprogramar']  = (int) ($r['reprogramar']  ?? 0);
         }
         return $rows;
     }

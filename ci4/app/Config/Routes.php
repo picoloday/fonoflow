@@ -88,6 +88,8 @@ $routes->group('api/v1', ['namespace' => 'App\Controllers\Api', 'filter' => 'jwt
     // Sesiones
     $routes->get('sesiones/materiales',             'SesionesController::materiales');
     $routes->get('sesiones/actividades',            'SesionesController::actividades');
+    $routes->get('sesiones/motivos',                'SesionesController::motivos');
+    $routes->post('sesiones/(:num)/reprogramar',    'SesionesController::toggleReprogramar/$1');
     $routes->get('sesiones/paciente/(:num)',        'SesionesController::infoPaciente/$1');
     $routes->get('sesiones',                        'SesionesController::index');
     $routes->post('sesiones',                       'SesionesController::create');
