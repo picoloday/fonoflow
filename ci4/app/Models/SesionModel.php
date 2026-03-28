@@ -21,16 +21,26 @@ class SesionModel extends Model
     public function resumenMeses(?int $pacienteId = null): array
     {
         $q = $this->db->table('sesiones')
-            ->select("DATE_FORMAT(fecha, '%Y-%m') AS mes,
-                      COUNT(*) AS total,
-                      SUM(CASE WHEN estado = 'completada' THEN precio ELSE 0 END) AS ingresos")
+            ->select("DATE_FORMAT(fecha, '%Y-%m') AS mes, COUNT(*) AS total")
             ->where('deleted_at IS NULL')
             ->groupBy("DATE_FORMAT(fecha, '%Y-%m')")
             ->orderBy('mes', 'DESC');
 
         if ($pacienteId) $q->where('paciente_id', $pacienteId);
 
-        return $q->get()->getResultArray();
+        $meses = $q->get()->getResultArray();
+
+        // Ingresos desde pagos_mensuales (no desde precio de sesiones)
+        foreach ($meses as &$m) {
+            $qp = $this->db->table('pagos_mensuales')
+                ->selectSum('importe')
+                ->where('mes', $m['mes']);
+            if ($pacienteId) $qp->where('paciente_id', $pacienteId);
+            $row = $qp->get()->getRowArray();
+            $m['ingresos'] = (float)($row['importe'] ?? 0);
+        }
+
+        return $meses;
     }
 
     // -------------------------------------------------------
@@ -294,12 +304,11 @@ class SesionModel extends Model
     // -------------------------------------------------------
     public function ingresosMes(string $mes): float
     {
-        $row = $this->db->table('sesiones')
-                        ->selectSum('precio')
-                        ->where('deleted_at IS NULL')
-                        ->like('fecha', $mes, 'after')
+        $row = $this->db->table('pagos_mensuales')
+                        ->selectSum('importe')
+                        ->where('mes', $mes)
                         ->get()->getRowArray();
-        return (float)($row['precio'] ?? 0);
+        return (float)($row['importe'] ?? 0);
     }
 
     public function totalMes(string $mes): int

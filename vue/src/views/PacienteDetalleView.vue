@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, computed, ref } from 'vue'
+import { onMounted, computed, ref, watch } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { usePacientesStore } from '@/stores/pacientes'
 import { agendarSesiones } from '@/api/pacientes'
@@ -60,6 +60,47 @@ const idsRecuperacion = computed(() => {
     if (s.sesion_reprogramada_id) ids.add(Number(s.sesion_reprogramada_id))
   return ids
 })
+
+// Agrupar historial por mes
+const mesActual = new Date().toISOString().slice(0, 7)
+const mesesAbiertos = ref(new Set([mesActual]))
+
+const historialPorMes = computed(() => {
+  const grupos = {}
+  for (const s of store.actual?.historial || []) {
+    const mes = s.fecha.slice(0, 7)
+    if (!grupos[mes]) grupos[mes] = []
+    grupos[mes].push(s)
+  }
+  return Object.entries(grupos)
+    .sort(([a], [b]) => b.localeCompare(a))
+    .map(([mes, sesiones]) => {
+      const [y, m] = mes.split('-')
+      const label = new Date(y, m - 1).toLocaleString('es', { month: 'long', year: 'numeric' })
+      return { mes, label, sesiones }
+    })
+})
+
+// Abrir el mes más reciente automáticamente cuando carga el historial
+watch(historialPorMes, (grupos) => {
+  if (grupos.length && !mesesAbiertos.value.size) {
+    mesesAbiertos.value = new Set([grupos[0].mes])
+  }
+}, { immediate: true })
+
+function toggleMes(mes) {
+  if (mesesAbiertos.value.has(mes)) {
+    mesesAbiertos.value.delete(mes)
+  } else {
+    mesesAbiertos.value.add(mes)
+  }
+  mesesAbiertos.value = new Set(mesesAbiertos.value)
+}
+
+const nombreMes = (ym) => {
+  const [y, m] = ym.split('-')
+  return new Date(y, m - 1).toLocaleString('es', { month: 'long', year: 'numeric' })
+}
 </script>
 
 <template>
@@ -167,33 +208,66 @@ const idsRecuperacion = computed(() => {
 
         <!-- Historial -->
         <div class="lg:col-span-2 bg-white shadow-sm rounded-xl overflow-hidden">
-          <div class="px-5 py-3 border-b bg-gray-50"><h2 class="font-semibold text-sm text-gray-700">Historial de sesiones</h2></div>
-          <ul class="divide-y divide-gray-100">
-            <li v-for="s in store.actual.historial" :key="s.id">
-              <RouterLink :to="`/sesiones/${s.id}`" class="flex items-start gap-3 px-5 py-3 hover:bg-gray-50">
-                <!-- Fecha y hora -->
-                <div class="flex-1 min-w-0">
-                  <p class="text-sm font-medium text-gray-900">
-                    {{ formatFecha(s.fecha) }}<span v-if="s.hora_inicio" class="text-gray-400 font-normal"> · {{ s.hora_inicio.slice(0,5) }}</span>
-                  </p>
-                  <!-- Motivo ausencia -->
-                  <p v-if="s.motivo_ausencia" class="text-sm text-red-500 mt-0.5">{{ s.motivo_ausencia }}</p>
-                  <!-- Indicadores extra -->
-                  <div class="flex gap-1.5 mt-1 flex-wrap">
-                    <span v-if="s.reprogramar == 1 && s.estado !== 'reprogramada'" class="text-sm px-1.5 py-0.5 bg-amber-50 text-amber-600 rounded border border-amber-200">Pendiente reprogramar</span>
-                  </div>
+          <div class="px-5 py-3 border-b bg-gray-50 flex items-center justify-between">
+            <h2 class="font-semibold text-sm text-gray-700">Historial de sesiones</h2>
+            <span class="text-xs text-gray-400">{{ store.actual.historial?.length || 0 }} sesiones</span>
+          </div>
+
+          <div v-if="historialPorMes.length" class="divide-y divide-gray-100">
+            <div v-for="grupo in historialPorMes" :key="grupo.mes">
+
+              <!-- Cabecera mes -->
+              <button @click="toggleMes(grupo.mes)"
+                class="w-full flex items-center justify-between px-5 py-3 hover:bg-gray-50 transition-colors">
+                <div class="flex items-center gap-2">
+                  <svg class="w-3.5 h-3.5 text-gray-400 transition-transform"
+                    :class="mesesAbiertos.has(grupo.mes) ? 'rotate-90' : ''"
+                    fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                  </svg>
+                  <span class="text-sm font-semibold text-gray-700 capitalize">{{ grupo.label }}</span>
+                  <span class="text-xs text-gray-400">{{ grupo.sesiones.length }} sesión{{ grupo.sesiones.length !== 1 ? 'es' : '' }}</span>
                 </div>
-                <!-- Badge estado (o recuperación) -->
-                <span class="text-sm px-2 py-0.5 rounded-full font-medium shrink-0 mt-0.5"
-                  :class="idsRecuperacion.has(s.id)
-                    ? 'bg-amber-100 text-amber-700'
-                    : estadoBadge[s.estado] || 'bg-gray-100 text-gray-600'">
-                  {{ idsRecuperacion.has(s.id) ? 'Recuperada' : (labelEstado[s.estado] || s.estado) }}
+                <span class="text-xs text-gray-400">
+                  {{ grupo.sesiones.filter(s => s.estado === 'completada').length }} completadas
                 </span>
-              </RouterLink>
-            </li>
-            <li v-if="!store.actual.historial?.length" class="px-5 py-8 text-center text-gray-400 text-sm">Sin sesiones</li>
-          </ul>
+              </button>
+
+              <!-- Sesiones del mes -->
+              <ul v-if="mesesAbiertos.has(grupo.mes)" class="divide-y divide-gray-50 bg-gray-50/30">
+                <li v-for="s in grupo.sesiones" :key="s.id">
+                  <RouterLink :to="`/sesiones/${s.id}`" class="flex items-start gap-3 px-5 py-3 hover:bg-gray-50 transition-colors">
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium text-gray-900">
+                        {{ formatFecha(s.fecha) }}<span v-if="s.hora_inicio" class="text-gray-400 font-normal"> · {{ s.hora_inicio.slice(0,5) }}</span>
+                      </p>
+                      <p v-if="s.motivo_ausencia" class="text-sm text-red-500 mt-0.5">{{ s.motivo_ausencia }}</p>
+                      <div class="flex gap-1.5 mt-1 flex-wrap">
+                        <span v-if="s.reprogramar == 1 && s.estado !== 'reprogramada'"
+                          class="text-xs px-1.5 py-0.5 bg-amber-50 text-amber-600 rounded border border-amber-200">
+                          Pendiente reprogramar
+                        </span>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0 mt-0.5">
+                      <span class="text-sm px-2 py-0.5 rounded-full font-medium"
+                        :class="idsRecuperacion.has(s.id)
+                          ? 'bg-amber-100 text-amber-700'
+                          : estadoBadge[s.estado] || 'bg-gray-100 text-gray-600'">
+                        {{ idsRecuperacion.has(s.id) ? 'Recuperada' : (labelEstado[s.estado] || s.estado) }}
+                      </span>
+                      <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                      </svg>
+                    </div>
+                  </RouterLink>
+                </li>
+              </ul>
+
+            </div>
+          </div>
+
+          <div v-else class="px-5 py-8 text-center text-gray-400 text-sm">Sin sesiones</div>
         </div>
       </div>
     </div>

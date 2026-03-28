@@ -152,13 +152,19 @@ const mesNombre = computed(() => {
             :class="[
               dia === fecha ? 'bg-teal-600 text-white font-bold' :
               dia === hoy   ? 'bg-teal-50 text-teal-700 font-semibold' :
+              agenda.festivos_mes?.[dia] && dia.slice(0,7) === mes ? 'bg-red-50 text-red-400' :
               dia.slice(0,7) !== mes ? 'text-gray-300' : 'text-gray-700 hover:bg-gray-100'
             ]"
+            :title="agenda.festivos_mes?.[dia] || undefined"
           >
             {{ dia.slice(8) }}
             <span
               v-if="agenda.citas_por_dia[dia]?.length && dia !== fecha"
               class="absolute bottom-0.5 w-1 h-1 rounded-full bg-teal-400"
+            />
+            <span
+              v-else-if="agenda.festivos_mes?.[dia] && dia !== fecha && dia.slice(0,7) === mes"
+              class="absolute bottom-0.5 w-1 h-1 rounded-full bg-red-300"
             />
           </button>
         </div>
@@ -194,6 +200,15 @@ const mesNombre = computed(() => {
             </h2>
           </div>
           <input type="date" v-model="fecha" class="text-sm border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-teal-500 shrink-0" />
+        </div>
+
+        <!-- Aviso día festivo -->
+        <div v-if="agenda?.festivos_mes?.[fecha]"
+          class="mx-4 mt-3 flex items-center gap-2 px-4 py-2.5 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+          </svg>
+          <span><strong>Día festivo:</strong> {{ agenda.festivos_mes[fecha] }}</span>
         </div>
 
         <div v-if="store.loading" class="p-5 space-y-3">

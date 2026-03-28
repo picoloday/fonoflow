@@ -25,6 +25,7 @@ const routes = [
       { path: 'sesiones/:id',           name: 'sesion-detalle',   component: () => import('@/views/SesionDetalleView.vue') },
       { path: 'citas/nueva',            name: 'cita-nueva',       component: () => import('@/views/CitaFormView.vue') },
       { path: 'citas/:id',              name: 'cita-detalle',     component: () => import('@/views/CitaDetalleView.vue') },
+      { path: 'festivos',               name: 'festivos',         component: () => import('@/views/FestivosView.vue') },
     ],
   },
 ]

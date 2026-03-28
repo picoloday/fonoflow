@@ -13,7 +13,7 @@ class PacienteModel extends Model
     protected $allowedFields = [
         'nombre', 'tutor', 'parentesco', 'telefono', 'email',
         'fecha_nacimiento', 'foto', 'notas', 'activo', 'fecha_alta',
-        'dias_semana', 'precio_sesion',
+        'dias_semana', 'valor_mensual',
     ];
 
     // -------------------------------------------------------

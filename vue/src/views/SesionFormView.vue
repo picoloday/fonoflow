@@ -5,6 +5,7 @@ import { useSesionesStore } from '@/stores/sesiones'
 import { getSesion, getInfoPaciente } from '@/api/sesiones'
 import { getPacientes } from '@/api/pacientes'
 import { getCatalogo, addCatalogo } from '@/api/catalogo'
+import { getFestivos } from '@/api/festivos'
 
 const store  = useSesionesStore()
 const router = useRouter()
@@ -23,7 +24,6 @@ const form = ref({
   fecha:        route.query.fecha || new Date().toISOString().slice(0, 10),
   hora_inicio:  route.query.hora  || '',
   duracion:     30,
-  precio:       12,
   objetivos:    [],
   actividades:  [],
   materiales:   [],
@@ -31,6 +31,26 @@ const form = ref({
 
 const error   = ref('')
 const loading = ref(false)
+
+// Festivos: cache por año para no repetir llamadas
+const festivosCache = {}
+const festivoDia = ref('')   // nombre del festivo si la fecha elegida lo es
+
+async function checkFestivo(fecha) {
+  if (!fecha) { festivoDia.value = ''; return }
+  const año = fecha.slice(0, 4)
+  if (!festivosCache[año]) {
+    try {
+      const { data } = await getFestivos(año)
+      const map = {}
+      for (const f of data.data.festivos) map[f.fecha] = f.nombre
+      festivosCache[año] = map
+    } catch { festivosCache[año] = {} }
+  }
+  festivoDia.value = festivosCache[año][fecha] || ''
+}
+
+watch(() => form.value.fecha, checkFestivo, { immediate: true })
 
 // Genera slots según día: sábado 09:00–14:00, resto 15:00–21:00
 const horasDisponibles = computed(() => {
@@ -89,13 +109,7 @@ onMounted(async () => {
   }
 })
 
-function calcularPrecio(paciente, duracion) {
-  const base = parseFloat(paciente?.precio_sesion ?? 0)
-  if (!base) return form.value.precio  // sin tarifa definida: no tocar
-  return parseFloat((base * duracion / 30).toFixed(2))
-}
-
-// Al seleccionar paciente en modo creación → pre-cargar info, objetivos y precio
+// Al seleccionar paciente en modo creación → pre-cargar info y objetivos
 watch(() => form.value.paciente_id, async (id) => {
   if (esEditar || !id) { if (!id) { infoPaciente.value = null; form.value.objetivos = [] }; return }
   loadingInfo.value = true
@@ -103,16 +117,8 @@ watch(() => form.value.paciente_id, async (id) => {
     const { data } = await getInfoPaciente(id)
     infoPaciente.value = data.data
     form.value.objetivos = [...(data.data.objetivos_generales || [])]
-    form.value.precio = calcularPrecio(data.data, form.value.duracion)
   } finally {
     loadingInfo.value = false
-  }
-})
-
-// Al cambiar duración → recalcular precio si el paciente tiene tarifa definida
-watch(() => form.value.duracion, (duracion) => {
-  if (!esEditar) {
-    form.value.precio = calcularPrecio(infoPaciente.value, duracion)
   }
 })
 
@@ -238,6 +244,12 @@ async function guardar() {
       <!-- FECHA, HORA Y DURACIÓN -->
       <section class="bg-white shadow-sm rounded-xl p-6 space-y-4">
         <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Fecha y duración</h2>
+        <div v-if="festivoDia" class="flex items-center gap-2 px-4 py-2.5 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+          </svg>
+          <span><strong>Día festivo:</strong> {{ festivoDia }} — no se recomienda agendar sesiones este día.</span>
+        </div>
         <div class="grid grid-cols-3 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Fecha *</label>
@@ -260,19 +272,6 @@ async function guardar() {
               <option :value="45">45 min</option>
               <option :value="60">60 min</option>
             </select>
-          </div>
-        </div>
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Precio (€)</label>
-            <input v-model="form.precio" type="number" step="0.5" min="0"
-              class="block w-full border border-gray-300 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"/>
-            <p v-if="!esEditar && infoPaciente?.precio_sesion" class="text-xs text-gray-400 mt-1">
-              Calculado desde la tarifa del paciente ({{ infoPaciente.precio_sesion }} € / 30 min). Puedes ajustarlo.
-            </p>
-            <p v-else-if="!esEditar && infoPaciente && !infoPaciente.precio_sesion" class="text-xs text-amber-600 mt-1">
-              Este paciente no tiene tarifa configurada. Introduce el precio manualmente.
-            </p>
           </div>
         </div>
       </section>

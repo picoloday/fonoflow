@@ -99,6 +99,15 @@ $routes->group('api/v1', ['namespace' => 'App\Controllers\Api', 'filter' => 'jwt
     $routes->post('sesiones/(:num)/completar',      'SesionesController::completar/$1');
     $routes->post('sesiones/(:num)/objetivo/(:num)','SesionesController::toggleObjetivo/$1/$2');
 
+    // Pagos mensuales
+    $routes->get('pagos',                               'PagosController::index');
+    $routes->put('pagos/(:num)/(:any)',                 'PagosController::update/$1/$2');
+
+    // Festivos
+    $routes->get('festivos',                            'FestivosController::index');
+    $routes->post('festivos/sync',                      'FestivosController::sync');
+    $routes->delete('festivos/(:num)',                  'FestivosController::delete/$1');
+
     // Catálogos (listas maestras ampliables)
     $routes->get('catalogo/(:segment)',             'CatalogoController::index/$1');
     $routes->post('catalogo/(:segment)',            'CatalogoController::create/$1');

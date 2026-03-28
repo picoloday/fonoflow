@@ -145,6 +145,15 @@ class CitasController extends BaseApiController
         // Ordenar por hora
         usort($slots, fn($a, $b) => strcmp($a['_hora'], $b['_hora']));
 
+        // Festivos del mes (fecha => nombre)
+        $festivosMes = [];
+        foreach (
+            $this->db->table('festivos')->like('fecha', $mes, 'after')->get()->getResultArray()
+            as $f
+        ) {
+            $festivosMes[$f['fecha']] = $f['nombre'];
+        }
+
         return $this->ok([
             'today'        => $today,
             'fecha'        => $fecha,
@@ -157,6 +166,7 @@ class CitasController extends BaseApiController
             'hora_inicio'  => CitaModel::horaInicio($fecha),
             'hora_fin'     => CitaModel::horaFin($fecha),
             'estados'      => AppConfig::$estados,
+            'festivos_mes' => $festivosMes,
         ]);
     }
 

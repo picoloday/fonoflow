@@ -78,6 +78,20 @@ class PacientesController extends BaseApiController
         }
 
         $this->model->actualizar($id, $data);
+
+        // Si cambia valor_mensual → actualizar pagos_mensuales del mes actual en adelante
+        // Los meses pasados quedan intactos (dato histórico)
+        if (isset($data['valor_mensual']) && $data['valor_mensual'] !== null) {
+            $mesActual = date('Y-m');
+            $now       = date('Y-m-d H:i:s');
+            $importe   = (float) $data['valor_mensual'];
+
+            $this->db->query(
+                "UPDATE pagos_mensuales SET importe = ?, updated_at = ? WHERE paciente_id = ? AND mes >= ?",
+                [$importe, $now, $id, $mesActual]
+            );
+        }
+
         return $this->ok($this->model->obtener($id), 'Paciente actualizado');
     }
 
@@ -116,6 +130,32 @@ class PacientesController extends BaseApiController
         $primerDia = $mes . '-01';
         $totalDias = (int) date('t', strtotime($primerDia));
 
+        // Festivos del mes: sincronizar el año si aún no hay datos
+        $año = (int) date('Y', strtotime($primerDia));
+        $hayFestivosAño = $this->db->table('festivos')
+            ->where('YEAR(fecha)', $año)->countAllResults();
+        if ($hayFestivosAño === 0) {
+            // Auto-sincronizar silenciosamente
+            try {
+                $client   = \Config\Services::curlrequest();
+                $response = $client->get("https://date.nager.at/api/v3/PublicHolidays/{$año}/ES", [
+                    'timeout' => 5, 'verify' => false, 'http_errors' => false,
+                ]);
+                $apiData = json_decode($response->getBody(), true);
+                if (is_array($apiData)) {
+                    foreach ($apiData as $f) {
+                        if (!($f['global'] || (!empty($f['counties']) && in_array('ES-MD', (array)$f['counties'])))) continue;
+                        try { $this->db->table('festivos')->insert(['fecha' => $f['date'], 'nombre' => $f['localName']]); } catch (\Throwable $e) {}
+                    }
+                }
+            } catch (\Throwable $e) {}
+        }
+
+        $festivosMes = array_column(
+            $this->db->table('festivos')->like('fecha', $mes, 'after')->get()->getResultArray(),
+            'fecha'
+        );
+
         $sesionModel = new SesionModel();
         $creadas     = [];
         $omitidas    = [];
@@ -125,6 +165,12 @@ class PacientesController extends BaseApiController
             $diaSemana = (int) date('N', strtotime($fecha)); // 1=Lun … 6=Sáb
 
             if (!isset($horarioPorDia[$diaSemana])) continue;
+
+            // ¿Es festivo?
+            if (in_array($fecha, $festivosMes)) {
+                $omitidas[] = ['fecha' => $fecha, 'motivo' => 'Día festivo'];
+                continue;
+            }
 
             $hora     = $horarioPorDia[$diaSemana]['hora'];
             $duracion = $horarioPorDia[$diaSemana]['duracion'];
@@ -154,15 +200,12 @@ class PacientesController extends BaseApiController
                 continue;
             }
 
-            $precioBase = (float)($paciente['precio_sesion'] ?? 0);
-            $precio     = $precioBase > 0 ? round($precioBase * $duracion / 30, 2) : 0.00;
-
             $sesionModel->crear([
                 'paciente_id' => $id,
                 'fecha'       => $fecha,
                 'hora_inicio' => $hora,
                 'duracion'    => $duracion,
-                'precio'      => $precio,
+                'precio'      => 0.00,
                 'objetivos'   => array_map(fn($o) => trim($o), $paciente['objetivos_generales'] ?? []),
             ]);
 
@@ -216,8 +259,8 @@ class PacientesController extends BaseApiController
         }
         usort($horario, fn($a, $b) => $a['dia'] - $b['dia']);
 
-        $precioSesion = isset($json['precio_sesion']) && $json['precio_sesion'] !== ''
-            ? (float) $json['precio_sesion']
+        $valorMensual = isset($json['valor_mensual']) && $json['valor_mensual'] !== ''
+            ? (float) $json['valor_mensual']
             : null;
 
         return [
@@ -232,7 +275,7 @@ class PacientesController extends BaseApiController
             'patologias'          => $patologias,
             'objetivos_generales' => $objetivos,
             'dias_semana'         => !empty($horario) ? json_encode($horario) : null,
-            'precio_sesion'       => $precioSesion,
+            'valor_mensual'       => $valorMensual,
         ];
     }
 }
