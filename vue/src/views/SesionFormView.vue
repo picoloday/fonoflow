@@ -89,7 +89,13 @@ onMounted(async () => {
   }
 })
 
-// Al seleccionar paciente en modo creación → pre-cargar info y objetivos
+function calcularPrecio(paciente, duracion) {
+  const base = parseFloat(paciente?.precio_sesion ?? 0)
+  if (!base) return form.value.precio  // sin tarifa definida: no tocar
+  return parseFloat((base * duracion / 30).toFixed(2))
+}
+
+// Al seleccionar paciente en modo creación → pre-cargar info, objetivos y precio
 watch(() => form.value.paciente_id, async (id) => {
   if (esEditar || !id) { if (!id) { infoPaciente.value = null; form.value.objetivos = [] }; return }
   loadingInfo.value = true
@@ -97,8 +103,16 @@ watch(() => form.value.paciente_id, async (id) => {
     const { data } = await getInfoPaciente(id)
     infoPaciente.value = data.data
     form.value.objetivos = [...(data.data.objetivos_generales || [])]
+    form.value.precio = calcularPrecio(data.data, form.value.duracion)
   } finally {
     loadingInfo.value = false
+  }
+})
+
+// Al cambiar duración → recalcular precio si el paciente tiene tarifa definida
+watch(() => form.value.duracion, (duracion) => {
+  if (!esEditar) {
+    form.value.precio = calcularPrecio(infoPaciente.value, duracion)
   }
 })
 
@@ -253,6 +267,12 @@ async function guardar() {
             <label class="block text-sm font-medium text-gray-700 mb-1">Precio (€)</label>
             <input v-model="form.precio" type="number" step="0.5" min="0"
               class="block w-full border border-gray-300 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"/>
+            <p v-if="!esEditar && infoPaciente?.precio_sesion" class="text-xs text-gray-400 mt-1">
+              Calculado desde la tarifa del paciente ({{ infoPaciente.precio_sesion }} € / 30 min). Puedes ajustarlo.
+            </p>
+            <p v-else-if="!esEditar && infoPaciente && !infoPaciente.precio_sesion" class="text-xs text-amber-600 mt-1">
+              Este paciente no tiene tarifa configurada. Introduce el precio manualmente.
+            </p>
           </div>
         </div>
       </section>

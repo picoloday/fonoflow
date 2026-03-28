@@ -32,6 +32,7 @@ const form = ref({
   notas: '', activo: true,
   patologias: [], objetivos_generales: [],
   horario: [],  // [{dia:1, hora:'15:00', duracion:30}, ...]
+  precio_sesion: '',
 })
 
 function horarioDia(n) {
@@ -321,6 +322,19 @@ function inputClass(campo) {
         <div>
           <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Horario habitual</h2>
           <p class="text-sm text-gray-400 mt-0.5">Cada día puede tener su propia hora y duración.</p>
+        </div>
+
+        <!-- Valor de la sesión -->
+        <div class="flex items-center gap-4 pt-1">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Valor de la sesión (30 min) <span class="text-gray-400 font-normal">€</span></label>
+            <input v-model="form.precio_sesion" type="number" step="0.5" min="0" placeholder="Ej: 35"
+              class="w-36 border border-gray-300 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"/>
+          </div>
+          <div v-if="form.precio_sesion" class="mt-5 text-sm text-gray-500 space-y-0.5">
+            <p>45 min → <strong class="text-gray-700">{{ (form.precio_sesion * 1.5).toFixed(2) }} €</strong></p>
+            <p>60 min → <strong class="text-gray-700">{{ (form.precio_sesion * 2).toFixed(2) }} €</strong></p>
+          </div>
         </div>
 
         <!-- Círculos de días -->

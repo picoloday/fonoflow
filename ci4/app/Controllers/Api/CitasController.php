@@ -91,16 +91,18 @@ class CitasController extends BaseApiController
 
         // Detectar sesiones de recuperación: sesiones cuyo ID aparece como
         // sesion_reprogramada_id en otra sesión con estado='reprogramada'
-        $idsRecuperacion = [];
+        $recuperacionMap = [];
         if (!empty($sessDia)) {
             $idsDia = array_column($sessDia, 'id');
             $rows   = $this->db->table('sesiones')
-                ->select('sesion_reprogramada_id')
+                ->select('sesion_reprogramada_id, fecha')
                 ->whereIn('sesion_reprogramada_id', $idsDia)
                 ->where('estado', 'reprogramada')
                 ->where('deleted_at IS NULL')
                 ->get()->getResultArray();
-            $idsRecuperacion = array_column($rows, 'sesion_reprogramada_id');
+            foreach ($rows as $r) {
+                $recuperacionMap[$r['sesion_reprogramada_id']] = $r['fecha'];
+            }
         }
 
         // Índice por hora → array de items (puede haber varias sesiones a la misma hora)
@@ -111,8 +113,9 @@ class CitasController extends BaseApiController
         }
         foreach ($sessDia as $s) {
             $item = array_merge($s, ['_tipo' => 'sesion']);
-            if (in_array($s['id'], $idsRecuperacion)) {
-                $item['_recuperacion'] = true;
+            if (isset($recuperacionMap[$s['id']])) {
+                $item['_recuperacion']       = true;
+                $item['_recuperacion_fecha'] = $recuperacionMap[$s['id']];
             }
             $h = substr($s['hora_inicio'], 0, 5);
             $itemsPorHora[$h][] = $item;

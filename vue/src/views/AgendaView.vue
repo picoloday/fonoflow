@@ -52,7 +52,8 @@ const sesionesDelDia = computed(() => {
 })
 
 function cardColor(cita) {
-  if (cita._recuperacion)       return 'border-l-4 border-amber-400 bg-amber-50'
+  // Si es recuperación pero no completada → amber; completada recuperación → verde
+  if (cita._recuperacion && cita.estado !== 'completada') return 'border-l-4 border-amber-400 bg-amber-50'
   const map = {
     programada:   'border-l-4 border-blue-500 bg-blue-50',
     completada:   'border-l-4 border-green-500 bg-green-50',
@@ -64,7 +65,6 @@ function cardColor(cita) {
 }
 
 function badgeColor(cita) {
-  if (cita._recuperacion)       return 'bg-amber-100 text-amber-700'
   const map = {
     programada:   'bg-blue-100 text-blue-700',
     completada:   'bg-green-100 text-green-700',
@@ -76,11 +76,20 @@ function badgeColor(cita) {
 }
 
 function labelCita(cita) {
-  if (cita._recuperacion) return 'Recuperación'
   return { programada: 'Programada', completada: 'Completada', cancelada: 'No asiste', reprogramada: 'Reprogramada', no_asistio: 'No asistió' }[cita.estado] || cita.estado
 }
 
-const diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+function formatFechaCorta(fecha) {
+  if (!fecha) return ''
+  const [, m, d] = fecha.split('-')
+  const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
+  return `${parseInt(d)} ${meses[parseInt(m) - 1]}`
+}
+
+const diasSemana  = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+// En desktop el calendario siempre es visible; en móvil empieza oculto
+const esMovil    = () => window.innerWidth < 1024
+const calVisible = ref(!esMovil())
 
 
 function prevMes() {
@@ -107,7 +116,16 @@ const mesNombre = computed(() => {
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
       <!-- Columna izquierda: calendario -->
-      <div class="bg-white shadow-sm rounded-xl p-4">
+      <!-- En móvil: oculto por defecto, se despliega con transición -->
+      <Transition
+        enter-active-class="transition-all duration-300 ease-out overflow-hidden"
+        enter-from-class="max-h-0 opacity-0"
+        enter-to-class="max-h-[600px] opacity-100"
+        leave-active-class="transition-all duration-200 ease-in overflow-hidden"
+        leave-from-class="max-h-[600px] opacity-100"
+        leave-to-class="max-h-0 opacity-0"
+      >
+        <div v-show="calVisible" class="bg-white shadow-sm rounded-xl p-4">
 
         <!-- Cabecera mes -->
         <div class="flex items-center justify-between mb-4">
@@ -155,15 +173,27 @@ const mesNombre = computed(() => {
           </svg>
           Nueva sesión
         </RouterLink>
-      </div>
+        </div>
+      </Transition>
 
       <!-- Columna derecha: timeline -->
       <div class="lg:col-span-2 bg-white shadow-sm rounded-xl overflow-hidden">
-        <div class="px-5 py-3 border-b bg-gray-50 flex items-center justify-between">
-          <h2 class="font-semibold text-gray-700 text-sm">
-            {{ new Date(fecha + 'T12:00:00').toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' }) }}
-          </h2>
-          <input type="date" v-model="fecha" class="text-sm border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-teal-500" />
+        <div class="px-5 py-3 border-b bg-gray-50 flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2 min-w-0">
+            <!-- Botón calendario: solo en móvil -->
+            <button @click="calVisible = !calVisible"
+              class="lg:hidden flex items-center gap-1 px-2 py-1 rounded-lg border text-xs font-medium transition-colors shrink-0"
+              :class="calVisible ? 'bg-teal-50 border-teal-300 text-teal-700' : 'bg-white border-gray-300 text-gray-500 hover:border-teal-300'">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+              {{ calVisible ? 'Ocultar' : 'Calendario' }}
+            </button>
+            <h2 class="font-semibold text-gray-700 text-sm truncate">
+              {{ new Date(fecha + 'T12:00:00').toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' }) }}
+            </h2>
+          </div>
+          <input type="date" v-model="fecha" class="text-sm border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-teal-500 shrink-0" />
         </div>
 
         <div v-if="store.loading" class="p-5 space-y-3">
@@ -189,8 +219,8 @@ const mesNombre = computed(() => {
                     <span class="text-sm px-2 py-0.5 rounded-full font-medium" :class="badgeColor(cita)">
                       {{ labelCita(cita) }}
                     </span>
-                    <span v-if="cita.recuperacion" class="text-sm px-2 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700">
-                      Recuperación
+                    <span v-if="cita._recuperacion || cita.recuperacion" class="text-sm px-2 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700">
+                      Recuperación{{ cita._recuperacion_fecha ? ` · ${formatFechaCorta(cita._recuperacion_fecha)}` : '' }}
                     </span>
                   </div>
                 </div>

@@ -154,12 +154,15 @@ class PacientesController extends BaseApiController
                 continue;
             }
 
+            $precioBase = (float)($paciente['precio_sesion'] ?? 0);
+            $precio     = $precioBase > 0 ? round($precioBase * $duracion / 30, 2) : 0.00;
+
             $sesionModel->crear([
                 'paciente_id' => $id,
                 'fecha'       => $fecha,
                 'hora_inicio' => $hora,
                 'duracion'    => $duracion,
-                'precio'      => 12.00,
+                'precio'      => $precio,
                 'objetivos'   => array_map(fn($o) => trim($o), $paciente['objetivos_generales'] ?? []),
             ]);
 
@@ -213,6 +216,10 @@ class PacientesController extends BaseApiController
         }
         usort($horario, fn($a, $b) => $a['dia'] - $b['dia']);
 
+        $precioSesion = isset($json['precio_sesion']) && $json['precio_sesion'] !== ''
+            ? (float) $json['precio_sesion']
+            : null;
+
         return [
             'nombre'              => $json['nombre'] ?? null,
             'tutor'               => $json['tutor'] ?? null,
@@ -225,6 +232,7 @@ class PacientesController extends BaseApiController
             'patologias'          => $patologias,
             'objetivos_generales' => $objetivos,
             'dias_semana'         => !empty($horario) ? json_encode($horario) : null,
+            'precio_sesion'       => $precioSesion,
         ];
     }
 }
