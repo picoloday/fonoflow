@@ -401,7 +401,8 @@ async function guardarCompletar() {
                 class="block w-full border border-gray-300 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"/>
             </div>
 
-            <label class="flex items-center gap-3 cursor-pointer select-none">
+            <label v-if="sesion?.paciente_pendientes_reprogramar > 0"
+              class="flex items-center gap-3 cursor-pointer select-none">
               <input v-model="recuperacion" type="checkbox"
                 class="w-4 h-4 rounded border-gray-300 text-amber-500 focus:ring-amber-400"/>
               <span class="text-sm text-gray-700">Esta sesión es una recuperación</span>

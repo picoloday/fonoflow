@@ -61,6 +61,13 @@ class SesionesController extends BaseApiController
         $pacienteModel = new PacienteModel();
         $sesion['paciente'] = $pacienteModel->obtener($sesion['paciente_id']);
 
+        $sesion['paciente_pendientes_reprogramar'] = (int) $this->db->table('sesiones')
+            ->where('paciente_id', (int) $sesion['paciente_id'])
+            ->where('estado', 'cancelada')
+            ->where('reprogramar', 1)
+            ->where('deleted_at IS NULL')
+            ->countAllResults();
+
         return $this->ok($sesion);
     }
 

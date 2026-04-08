@@ -70,7 +70,7 @@ async function guardarPago(mes, pacienteId) {
     const detalle = pagosMes.value[mes]
     if (detalle) {
       const p = detalle.pacientes.find(p => p.paciente_id == pacienteId)
-      if (p) p.importe = importe
+      if (p) { p.importe = importe; p.confirmado = true }
       detalle.total = detalle.pacientes.reduce((s, p) => s + (p.importe ?? 0), 0)
     }
     // Sincronizar resumen global

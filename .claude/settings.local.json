@@ -18,7 +18,10 @@
       "Bash(grep -r \"login\\\\|token\\\\|auth\" c:/laragon/www/fonoflow/vue/src/stores/ --include=*.js --include=*.ts -l)",
       "Bash(grep -r \"login\\\\|token\\\\|auth\" c:/laragon/www/fonoflow/vue/src/ --include=*.js --include=*.vue -l)",
       "Bash(xargs grep:*)",
-      "Bash(node generate-icons.mjs)"
+      "Bash(node generate-icons.mjs)",
+      "Bash(find \"c:\\\\laragon\\\\www\\\\fonoflow\\\\ci4\" -name \"*.php\" -type f -exec grep -l \"recuperacion\" {} \\\\;)",
+      "Bash(find \"c:\\\\laragon\\\\www\\\\fonoflow\\\\ci4\\\\app\\\\Database\\\\Migrations\" -type f -name \"*.php\" -exec grep -l \"recuperacion\" {} \\\\;)",
+      "Bash(grep -A 100 \"CREATE TABLE \\\\`sesiones\\\\`\" \"c:\\\\laragon\\\\www\\\\fonoflow\\\\ci4\\\\fonoflow.sql\")"
     ]
   }
 }
