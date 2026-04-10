@@ -13,7 +13,8 @@ const nav = [
   { name: 'agenda',    label: 'Agenda',    path: '/agenda' },
   { name: 'pacientes', label: 'Pacientes', path: '/pacientes' },
   { name: 'sesiones',  label: 'Facturación',  path: '/sesiones' },
-  { name: 'festivos',  label: 'Festivos',     path: '/festivos' },
+  { name: 'festivos',    label: 'Festivos',     path: '/festivos' },
+  { name: 'pendientes', label: 'Pendientes',   path: '/pendientes' },
 ]
 
 const isActive = (path) =>

@@ -300,6 +300,47 @@ class SesionModel extends Model
     }
 
     // -------------------------------------------------------
+    // Pacientes con sesiones pendientes de reprogramar
+    // -------------------------------------------------------
+    public function pendientesReprogramar(): array
+    {
+        // Pacientes que tienen al menos una sesión cancelada con reprogramar=1
+        $pacientes = $this->db->table('sesiones')
+            ->select('pacientes.id AS paciente_id, pacientes.nombre AS paciente_nombre,
+                      COUNT(sesiones.id) AS total_pendientes,
+                      SUM(sesiones.precio) AS precio_pendiente')
+            ->join('pacientes', 'pacientes.id = sesiones.paciente_id')
+            ->where('sesiones.estado', 'cancelada')
+            ->where('sesiones.reprogramar', 1)
+            ->where('sesiones.deleted_at IS NULL')
+            ->groupBy('pacientes.id, pacientes.nombre')
+            ->orderBy('total_pendientes', 'DESC')
+            ->orderBy('pacientes.nombre', 'ASC')
+            ->get()->getResultArray();
+
+        foreach ($pacientes as &$p) {
+            $p['total_pendientes']  = (int)   $p['total_pendientes'];
+            $p['precio_pendiente']  = (float) $p['precio_pendiente'];
+
+            // Sesiones individuales del paciente pendientes
+            $p['sesiones'] = $this->db->table('sesiones')
+                ->select('id, fecha, hora_inicio, motivo_ausencia, precio')
+                ->where('paciente_id', (int) $p['paciente_id'])
+                ->where('estado', 'cancelada')
+                ->where('reprogramar', 1)
+                ->where('deleted_at IS NULL')
+                ->orderBy('fecha', 'ASC')
+                ->get()->getResultArray();
+
+            foreach ($p['sesiones'] as &$s) {
+                $s['precio'] = (float) $s['precio'];
+            }
+        }
+
+        return $pacientes;
+    }
+
+    // -------------------------------------------------------
     // Estadísticas para el dashboard
     // -------------------------------------------------------
     public function ingresosMes(string $mes): float

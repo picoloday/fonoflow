@@ -26,6 +26,7 @@ const routes = [
       { path: 'citas/nueva',            name: 'cita-nueva',       component: () => import('@/views/CitaFormView.vue') },
       { path: 'citas/:id',              name: 'cita-detalle',     component: () => import('@/views/CitaDetalleView.vue') },
       { path: 'festivos',               name: 'festivos',         component: () => import('@/views/FestivosView.vue') },
+      { path: 'pendientes',             name: 'pendientes',       component: () => import('@/views/PendientesReprogramarView.vue') },
     ],
   },
 ]

@@ -86,6 +86,7 @@ $routes->group('api/v1', ['namespace' => 'App\Controllers\Api', 'filter' => 'jwt
     $routes->post('citas/(:num)/cancelar',          'CitasController::cancelar/$1');
 
     // Sesiones
+    $routes->get('sesiones/pendientes-reprogramar',  'SesionesController::pendientesReprogramar');
     $routes->get('sesiones/materiales',             'SesionesController::materiales');
     $routes->get('sesiones/actividades',            'SesionesController::actividades');
     $routes->get('sesiones/motivos',                'SesionesController::motivos');

@@ -262,6 +262,17 @@ class SesionesController extends BaseApiController
         return $this->ok($lista);
     }
 
+    public function pendientesReprogramar()
+    {
+        $lista = $this->model->pendientesReprogramar();
+        return $this->ok([
+            'pacientes'       => $lista,
+            'total_pacientes' => count($lista),
+            'total_sesiones'  => array_sum(array_column($lista, 'total_pendientes')),
+            'total_precio'    => array_sum(array_column($lista, 'precio_pendiente')),
+        ]);
+    }
+
     public function toggleReprogramar(int $id)
     {
         $sesion = $this->model->obtener($id);
