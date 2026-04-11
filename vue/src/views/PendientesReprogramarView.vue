@@ -1,10 +1,10 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { getPendientesReprogramar } from '@/api/sesiones'
 
 const loading  = ref(true)
-const resumen  = ref({ pacientes: [], total_pacientes: 0, total_sesiones: 0, total_precio: 0 })
+const resumen  = ref({ pacientes: [], total_pacientes: 0, total_sesiones: 0 })
 const abiertos = ref(new Set())
 
 onMounted(cargar)
@@ -33,9 +33,7 @@ function formatFecha(fecha) {
   return `${d}/${m}/${y}`
 }
 
-function formatPrecio(precio) {
-  return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(precio)
-}
+
 </script>
 
 <template>
@@ -59,7 +57,7 @@ function formatPrecio(precio) {
     </div>
 
     <!-- Tarjetas de resumen -->
-    <div v-if="!loading" class="grid grid-cols-3 gap-3">
+    <div v-if="!loading" class="grid grid-cols-2 gap-3">
       <div class="bg-white rounded-xl p-4 shadow-sm text-center">
         <p class="text-2xl font-bold text-gray-900">{{ resumen.total_pacientes }}</p>
         <p class="text-xs text-gray-500 mt-0.5">Pacientes</p>
@@ -67,10 +65,6 @@ function formatPrecio(precio) {
       <div class="bg-white rounded-xl p-4 shadow-sm text-center">
         <p class="text-2xl font-bold text-amber-600">{{ resumen.total_sesiones }}</p>
         <p class="text-xs text-gray-500 mt-0.5">Sesiones pendientes</p>
-      </div>
-      <div class="bg-white rounded-xl p-4 shadow-sm text-center">
-        <p class="text-2xl font-bold text-teal-600">{{ formatPrecio(resumen.total_precio) }}</p>
-        <p class="text-xs text-gray-500 mt-0.5">Precio a recuperar</p>
       </div>
     </div>
 
@@ -112,9 +106,8 @@ function formatPrecio(precio) {
             </p>
           </div>
 
-          <!-- Precio y badge -->
+          <!-- Badge -->
           <div class="flex items-center gap-3 flex-shrink-0">
-            <span class="text-sm font-medium text-teal-700">{{ formatPrecio(p.precio_pendiente) }}</span>
             <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-100 text-amber-700 text-xs font-bold">
               {{ p.total_pendientes }}
             </span>
@@ -146,7 +139,6 @@ function formatPrecio(precio) {
               <span v-if="s.hora_inicio" class="text-xs text-gray-400 w-12">{{ s.hora_inicio.slice(0,5) }}</span>
               <span v-else class="w-12"></span>
               <span class="flex-1 text-sm text-gray-500 truncate">{{ s.motivo_ausencia || '—' }}</span>
-              <span class="text-sm text-teal-700 font-medium">{{ formatPrecio(s.precio) }}</span>
               <svg class="w-3.5 h-3.5 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
               </svg>
