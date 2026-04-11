@@ -13,7 +13,7 @@ async function cargar() {
   loading.value = true
   try {
     const { data } = await getPendientesReprogramar()
-    resumen.value = data
+    resumen.value = data.data
   } finally {
     loading.value = false
   }
