@@ -59,6 +59,20 @@ async function agregarMotivo() {
   }
 }
 
+// ── resetear sesión ───────────────────────────────────────────
+const confirmandoReset = ref(false)
+const reseteando       = ref(false)
+
+async function resetear() {
+  reseteando.value = true
+  try {
+    await store.resetear(route.params.id)
+    confirmandoReset.value = false
+  } finally {
+    reseteando.value = false
+  }
+}
+
 // ── toggle reprogramar ────────────────────────────────────────
 const toggling = ref(false)
 
@@ -152,6 +166,26 @@ async function guardarCompletar() {
             <span :class="['text-sm font-medium px-2.5 py-0.5 rounded-full', estadoBadge.cls]">
               {{ estadoBadge.text }}
             </span>
+            <!-- Resetear: solo en completada o cancelada -->
+            <div v-if="sesion.estado === 'completada' || sesion.estado === 'cancelada'" class="ml-auto flex items-center gap-2">
+              <span v-if="confirmandoReset" class="flex items-center gap-2">
+                <span class="text-sm text-orange-600">¿Volver a estado inicial?</span>
+                <button @click="resetear" :disabled="reseteando"
+                  class="text-sm px-3 py-1 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-60">
+                  {{ reseteando ? 'Reseteando...' : 'Sí, resetear' }}
+                </button>
+                <button @click="confirmandoReset = false" class="text-sm px-3 py-1 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">
+                  Cancelar
+                </button>
+              </span>
+              <button v-else @click="confirmandoReset = true"
+                class="text-sm px-3 py-1 border border-orange-300 rounded-lg text-orange-600 hover:bg-orange-50 flex items-center gap-1">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                Resetear
+              </button>
+            </div>
             <div v-if="sesion.estado === 'programada'" class="ml-auto flex items-center gap-2">
               <RouterLink
                 :to="`/sesiones/${sesion.id}/editar`"

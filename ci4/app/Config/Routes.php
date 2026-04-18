@@ -98,6 +98,7 @@ $routes->group('api/v1', ['namespace' => 'App\Controllers\Api', 'filter' => 'jwt
     $routes->put('sesiones/(:num)',                 'SesionesController::update/$1');
     $routes->delete('sesiones/(:num)',              'SesionesController::delete/$1');
     $routes->post('sesiones/(:num)/completar',      'SesionesController::completar/$1');
+    $routes->post('sesiones/(:num)/resetear',       'SesionesController::resetear/$1');
     $routes->post('sesiones/(:num)/objetivo/(:num)','SesionesController::toggleObjetivo/$1/$2');
 
     // Pagos mensuales

@@ -65,5 +65,11 @@ export const useSesionesStore = defineStore('sesiones', () => {
     return data.data
   }
 
-  return { resumen, detallesMes, cargandoMes, actual, loading, cargar, cargarMes, cargarUna, crear, editar, toggleObjetivo, completar, borrar, toggleReprogramar }
+  async function resetear(id) {
+    const { data } = await api.resetearSesion(id)
+    actual.value = data.data
+    return data.data
+  }
+
+  return { resumen, detallesMes, cargandoMes, actual, loading, cargar, cargarMes, cargarUna, crear, editar, toggleObjetivo, completar, borrar, toggleReprogramar, resetear }
 })

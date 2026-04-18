@@ -273,6 +273,48 @@ class SesionesController extends BaseApiController
         ]);
     }
 
+    public function resetear(int $id)
+    {
+        $sesion = $this->model->obtener($id);
+        if (!$sesion) return $this->notFound('Sesión no encontrada');
+
+        if (!in_array($sesion['estado'], ['completada', 'cancelada'])) {
+            return $this->fail('Solo se pueden resetear sesiones completadas o canceladas', 409);
+        }
+
+        // Restaurar precio si fue puesto a 0 al cancelar sin reprogramar
+        $precio = (float)$sesion['precio'];
+        if ($precio === 0.0) {
+            $precioRef = $this->db->table('sesiones')
+                ->select('precio')
+                ->where('paciente_id', (int)$sesion['paciente_id'])
+                ->where('id !=', $id)
+                ->where('precio >', 0)
+                ->where('deleted_at IS NULL')
+                ->orderBy('id', 'DESC')
+                ->limit(1)
+                ->get()->getRowArray();
+            if ($precioRef) $precio = (float)$precioRef['precio'];
+        }
+
+        // Resetear objetivos cumplidos
+        $this->db->table('sesion_objetivos')->where('sesion_id', $id)->update(['cumplido' => 0]);
+
+        $this->db->table('sesiones')->where('id', $id)->update([
+            'estado'                 => 'programada',
+            'asistio'                => null,
+            'motivo_ausencia'        => null,
+            'reprogramar'            => 0,
+            'sesion_reprogramada_id' => null,
+            'evolutivo'              => null,
+            'observaciones'          => null,
+            'recuperacion'           => 0,
+            'precio'                 => $precio,
+        ]);
+
+        return $this->ok($this->model->obtener($id), 'Sesión reseteada a estado inicial');
+    }
+
     public function toggleReprogramar(int $id)
     {
         $sesion = $this->model->obtener($id);
