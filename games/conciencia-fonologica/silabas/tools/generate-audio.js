@@ -31,10 +31,10 @@ const OUT_SYL = path.join(ROOT, 'audio', 'silabas');
 
 const SHELL = process.platform === 'win32';
 
-// If the TTS command is a Windows .exe (called from WSL), paths must be
+// If the Python exe is a Windows .exe (called from WSL), paths must be
 // converted from /mnt/c/... to C:\... so Windows Python can open them.
 function toMediaPath(p) {
-  if (tts && tts.cmd && tts.cmd.endsWith('.exe')) {
+  if (pythonExe && pythonExe.endsWith('.exe')) {
     return p.replace(/^\/mnt\/([a-z])(\/|$)/, (_, drive, rest) =>
       `${drive.toUpperCase()}:\\${rest}`).replace(/\//g, '\\');
   }
@@ -92,7 +92,12 @@ if (!tts) {
   process.exit(1);
 }
 
-console.log(`Motor TTS: ${tts.cmd} ${tts.prefix.join(' ')}`.trim());
+// Extraemos solo el ejecutable Python (sin el prefijo -m edge_tts).
+// synthesize.py usa la API Python directamente, que sí soporta SSML.
+const pythonExe = tts.cmd;
+const SYNTH = path.join(__dirname, 'synthesize.py');
+
+console.log(`Motor TTS: ${pythonExe} synthesize.py`);
 console.log(`Voz:       ${VOICE}`);
 
 fs.mkdirSync(OUT_WORDS, { recursive: true });
@@ -115,7 +120,7 @@ console.log('---');
 let n = 0;
 let errors = 0;
 
-function generate(text, dir) {
+function generate(text, dir, ttsText) {
   n++;
   const target = path.join(dir, `${text}.mp3`);
   if (fs.existsSync(target)) {
@@ -123,14 +128,10 @@ function generate(text, dir) {
     return;
   }
   process.stdout.write(`[${n}/${total}] · generando: ${text} ... `);
+  const speakText = ttsText || text;
   const res = spawnSync(
-    tts.cmd,
-    [
-      ...tts.prefix,
-      '--voice', VOICE,
-      '--text', text,
-      '--write-media', toMediaPath(target),
-    ],
+    pythonExe,
+    [toMediaPath(SYNTH), VOICE, speakText, toMediaPath(target)],
     { stdio: 'pipe', shell: SHELL },
   );
   if (res.status !== 0) {

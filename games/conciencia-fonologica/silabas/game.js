@@ -34,7 +34,7 @@ if ('speechSynthesis' in window) {
 
 function localUrl(text, kind) {
   const folder = kind === 'word' ? 'palabras' : 'silabas';
-  return `audio/${folder}/${encodeURIComponent(text.toLowerCase())}.mp3`;
+  return `audio/${folder}/${encodeURIComponent(text.toLowerCase())}.mp3?v=4`;
 }
 
 function googleUrl(text) {
