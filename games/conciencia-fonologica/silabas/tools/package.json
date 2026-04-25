@@ -1,0 +1,9 @@
+{
+  "name": "silabas-magicas-audio-tools",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Generador de audios MP3 para el juego de sílabas (orquesta Python edge-tts)",
+  "scripts": {
+    "generate": "node generate-audio.js"
+  }
+}
