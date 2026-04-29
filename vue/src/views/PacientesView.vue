@@ -1,16 +1,35 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import { RouterLink } from 'vue-router'
+import { ref, computed, onMounted, watch } from 'vue'
+import { RouterLink, useRoute } from 'vue-router'
 import { usePacientesStore } from '@/stores/pacientes'
 
 const store    = usePacientesStore()
+const route    = useRoute()
 const busqueda = ref('')
 const activo   = ref('1')
 
+const vistaInactivos = computed(() => route.name === 'pacientes-inactivos')
+
 onMounted(() => cargar())
 
+watch(() => route.name, () => {
+  busqueda.value = ''
+  activo.value = '1'
+  cargar()
+})
+
 async function cargar() {
-  await store.cargar({ q: busqueda.value, activo: activo.value })
+  if (vistaInactivos.value) {
+    await store.cargarInactivos({ q: busqueda.value })
+  } else {
+    await store.cargar({ q: busqueda.value, activo: activo.value })
+  }
+}
+
+async function reactivar(id, e) {
+  e.preventDefault()
+  e.stopPropagation()
+  await store.reactivar(id)
 }
 </script>
 
@@ -19,8 +38,11 @@ async function cargar() {
 
     <!-- Cabecera -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-      <h1 class="text-2xl font-bold text-gray-900">Pacientes</h1>
+      <h1 class="text-2xl font-bold text-gray-900">
+        {{ vistaInactivos ? 'Pacientes inactivos' : 'Pacientes' }}
+      </h1>
       <RouterLink
+        v-if="!vistaInactivos"
         to="/pacientes/nuevo"
         class="inline-flex items-center gap-1.5 px-4 py-2 bg-teal-600 text-white text-sm rounded-lg hover:bg-teal-700 transition-colors"
       >
@@ -41,6 +63,7 @@ async function cargar() {
         class="flex-1 border border-gray-300 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
       />
       <select
+        v-if="!vistaInactivos"
         v-model="activo"
         @change="cargar"
         class="border border-gray-300 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
@@ -68,17 +91,18 @@ async function cargar() {
       <RouterLink
         v-for="p in store.lista" :key="p.id"
         :to="`/pacientes/${p.id}`"
-        class="bg-white shadow-sm rounded-xl p-5 hover:shadow-md transition-shadow group"
+        class="bg-white shadow-sm rounded-xl p-5 hover:shadow-md transition-shadow group flex flex-col"
       >
         <div class="flex items-center gap-3 mb-3">
-          <div class="w-10 h-10 rounded-full bg-teal-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0"
+               :class="vistaInactivos ? 'bg-gray-400' : 'bg-teal-600'">
             {{ p.nombre.charAt(0).toUpperCase() }}
           </div>
           <div class="min-w-0">
             <p class="font-semibold text-gray-900 truncate group-hover:text-teal-600">{{ p.nombre }}</p>
             <p class="text-sm text-gray-400">{{ p.total_sesiones }} sesiones</p>
           </div>
-          <span v-if="!p.activo" class="ml-auto text-sm bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">Inactivo</span>
+          <span v-if="!p.activo && !vistaInactivos" class="ml-auto text-sm bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">Inactivo</span>
         </div>
         <div v-if="p.patologias.length" class="flex flex-wrap gap-1">
           <span
@@ -87,10 +111,17 @@ async function cargar() {
           >{{ pat }}</span>
           <span v-if="p.patologias.length > 3" class="text-sm text-gray-400">+{{ p.patologias.length - 3 }}</span>
         </div>
+        <button
+          v-if="vistaInactivos"
+          @click="reactivar(p.id, $event)"
+          class="mt-4 inline-flex justify-center items-center px-3 py-1.5 bg-teal-600 text-white text-sm rounded-lg hover:bg-teal-700 transition-colors"
+        >
+          Reactivar
+        </button>
       </RouterLink>
 
       <div v-if="!store.lista.length" class="col-span-full text-center py-12 text-gray-400">
-        No se encontraron pacientes
+        {{ vistaInactivos ? 'No hay pacientes inactivos' : 'No se encontraron pacientes' }}
       </div>
     </div>
 

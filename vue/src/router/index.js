@@ -15,6 +15,7 @@ const routes = [
       { path: '',         name: 'dashboard', component: () => import('@/views/DashboardView.vue') },
       { path: 'agenda',   name: 'agenda',    component: () => import('@/views/AgendaView.vue') },
       { path: 'pacientes',              name: 'pacientes',        component: () => import('@/views/PacientesView.vue') },
+      { path: 'pacientes/inactivos',    name: 'pacientes-inactivos', component: () => import('@/views/PacientesView.vue') },
       { path: 'pacientes/nuevo',        name: 'paciente-nuevo',   component: () => import('@/views/PacienteFormView.vue') },
       { path: 'pacientes/:id/informe',  name: 'paciente-informe', component: () => import('@/views/PacienteInformeView.vue') },
       { path: 'pacientes/:id',          name: 'paciente-detalle', component: () => import('@/views/PacienteDetalleView.vue') },

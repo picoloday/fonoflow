@@ -67,12 +67,15 @@ $routes->group('api/v1', ['namespace' => 'App\Controllers\Api', 'filter' => 'jwt
 
     // Pacientes
     $routes->get('pacientes/patologias',    'PacientesController::patologias');
+    $routes->get('pacientes/inactivos',     'PacientesController::inactivos');
     $routes->get('pacientes',               'PacientesController::index');
     $routes->post('pacientes',              'PacientesController::create');
     $routes->get('pacientes/(:num)',            'PacientesController::show/$1');
     $routes->put('pacientes/(:num)',            'PacientesController::update/$1');
     $routes->delete('pacientes/(:num)',         'PacientesController::delete/$1');
     $routes->post('pacientes/(:num)/agendar',   'PacientesController::agendar/$1');
+    $routes->post('pacientes/(:num)/inactivar', 'PacientesController::inactivar/$1');
+    $routes->post('pacientes/(:num)/reactivar', 'PacientesController::reactivar/$1');
 
     // Agenda + Citas
     $routes->get('agenda',                          'CitasController::agenda');

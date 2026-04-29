@@ -41,6 +41,34 @@ class PacienteModel extends Model
     }
 
     // -------------------------------------------------------
+    // Listar solo pacientes inactivos
+    // -------------------------------------------------------
+    public function listarInactivos(): array
+    {
+        $pacientes = $this->select('pacientes.*')
+                          ->where('activo', 0)
+                          ->orderBy('nombre', 'ASC')
+                          ->findAll();
+
+        foreach ($pacientes as &$p) {
+            $p['patologias']         = $this->getPatologias($p['id']);
+            $p['objetivos_generales'] = $this->getObjetivos($p['id']);
+            $p['total_sesiones']     = $this->getTotalSesiones($p['id']);
+            $p['ultima_sesion']      = $this->getUltimaSesion($p['id']);
+        }
+
+        return $pacientes;
+    }
+
+    // -------------------------------------------------------
+    // Cambiar estado activo/inactivo
+    // -------------------------------------------------------
+    public function setActivo(int $id, bool $activo): void
+    {
+        $this->update($id, ['activo' => $activo ? 1 : 0]);
+    }
+
+    // -------------------------------------------------------
     // Obtener un paciente con todos sus datos
     // -------------------------------------------------------
     public function obtener(int $id): ?array

@@ -7,12 +7,14 @@ use App\Models\SesionModel;
 use App\Config\AppConfig;
 
 /**
- * GET    /api/v1/pacientes              → lista (filtros: ?activo=1&q=nombre)
- * POST   /api/v1/pacientes              → crear
- * GET    /api/v1/pacientes/{id}         → detalle + historial sesiones
- * PUT    /api/v1/pacientes/{id}         → actualizar
- * DELETE /api/v1/pacientes/{id}         → eliminar (soft)
- * GET    /api/v1/pacientes/patologias   → lista de patologías únicas (para autocomplete)
+ * GET    /api/v1/pacientes                  → lista (filtros: ?activo=1|0|all&q=nombre)
+ * POST   /api/v1/pacientes                  → crear
+ * GET    /api/v1/pacientes/{id}             → detalle + historial sesiones
+ * PUT    /api/v1/pacientes/{id}             → actualizar
+ * DELETE /api/v1/pacientes/{id}             → eliminar (soft)
+ * POST   /api/v1/pacientes/{id}/inactivar   → marcar activo=0
+ * POST   /api/v1/pacientes/{id}/reactivar   → marcar activo=1
+ * GET    /api/v1/pacientes/patologias       → lista de patologías únicas (para autocomplete)
  */
 class PacientesController extends BaseApiController
 {
@@ -30,18 +32,42 @@ class PacientesController extends BaseApiController
 
         $pacientes = $this->model->listar($soloActivos);
 
-        if ($busqueda !== '') {
-            $q = mb_strtolower($busqueda);
-            $pacientes = array_values(array_filter($pacientes, function ($p) use ($q) {
-                if (mb_strpos(mb_strtolower($p['nombre']), $q) !== false) return true;
-                foreach ($p['patologias'] as $pat) {
-                    if (mb_strpos(mb_strtolower($pat), $q) !== false) return true;
-                }
-                return false;
-            }));
-        }
+        return $this->ok($this->aplicarBusqueda($pacientes, $busqueda));
+    }
 
-        return $this->ok($pacientes);
+    public function inactivos()
+    {
+        $busqueda  = $this->request->getGet('q') ?? '';
+        $pacientes = $this->model->listarInactivos();
+
+        return $this->ok($this->aplicarBusqueda($pacientes, $busqueda));
+    }
+
+    public function inactivar(int $id)
+    {
+        if (!$this->model->obtener($id)) return $this->notFound('Paciente no encontrado');
+        $this->model->setActivo($id, false);
+        return $this->ok($this->model->obtener($id), 'Paciente marcado como inactivo');
+    }
+
+    public function reactivar(int $id)
+    {
+        if (!$this->model->obtener($id)) return $this->notFound('Paciente no encontrado');
+        $this->model->setActivo($id, true);
+        return $this->ok($this->model->obtener($id), 'Paciente reactivado');
+    }
+
+    private function aplicarBusqueda(array $pacientes, string $busqueda): array
+    {
+        if ($busqueda === '') return $pacientes;
+        $q = mb_strtolower($busqueda);
+        return array_values(array_filter($pacientes, function ($p) use ($q) {
+            if (mb_strpos(mb_strtolower($p['nombre']), $q) !== false) return true;
+            foreach ($p['patologias'] as $pat) {
+                if (mb_strpos(mb_strtolower($pat), $q) !== false) return true;
+            }
+            return false;
+        }));
     }
 
     public function show(int $id)

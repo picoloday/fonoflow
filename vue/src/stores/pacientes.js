@@ -14,6 +14,13 @@ export const usePacientesStore = defineStore('pacientes', () => {
     loading.value = false
   }
 
+  async function cargarInactivos(params) {
+    loading.value = true
+    const { data } = await api.getInactivos(params)
+    lista.value = data.data
+    loading.value = false
+  }
+
   async function cargarUno(id) {
     loading.value = true
     const { data } = await api.getPaciente(id)
@@ -36,5 +43,17 @@ export const usePacientesStore = defineStore('pacientes', () => {
     lista.value = lista.value.filter(p => p.id !== id)
   }
 
-  return { lista, actual, loading, cargar, cargarUno, crear, editar, borrar }
+  async function inactivar(id) {
+    const { data } = await api.inactivarPaciente(id)
+    if (actual.value?.id === id) actual.value = { ...actual.value, ...data.data }
+    lista.value = lista.value.filter(p => p.id !== id)
+  }
+
+  async function reactivar(id) {
+    const { data } = await api.reactivarPaciente(id)
+    if (actual.value?.id === id) actual.value = { ...actual.value, ...data.data }
+    lista.value = lista.value.filter(p => p.id !== id)
+  }
+
+  return { lista, actual, loading, cargar, cargarInactivos, cargarUno, crear, editar, borrar, inactivar, reactivar }
 })

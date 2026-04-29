@@ -1,15 +1,14 @@
 <script setup>
 import { onMounted, computed, ref, watch } from 'vue'
-import { useRoute, useRouter, RouterLink } from 'vue-router'
+import { useRoute, RouterLink } from 'vue-router'
 import { usePacientesStore } from '@/stores/pacientes'
 import { agendarSesiones } from '@/api/pacientes'
 import { formatFecha } from '@/utils/fecha'
 
 const store  = usePacientesStore()
 const route  = useRoute()
-const router = useRouter()
-const confirmandoBorrar = ref(false)
-const borrando          = ref(false)
+const confirmandoInactivar = ref(false)
+const cambiandoEstado      = ref(false)
 
 // Agendar mes
 const mesAgendar      = ref(new Date().toISOString().slice(0, 7))
@@ -33,14 +32,22 @@ async function agendar() {
 
 onMounted(() => store.cargarUno(route.params.id))
 
-async function borrarPaciente() {
-  borrando.value = true
+async function inactivarPaciente() {
+  cambiandoEstado.value = true
   try {
-    await store.borrar(store.actual.id)
-    router.push('/pacientes')
+    await store.inactivar(store.actual.id)
   } finally {
-    borrando.value = false
-    confirmandoBorrar.value = false
+    cambiandoEstado.value = false
+    confirmandoInactivar.value = false
+  }
+}
+
+async function reactivarPaciente() {
+  cambiandoEstado.value = true
+  try {
+    await store.reactivar(store.actual.id)
+  } finally {
+    cambiandoEstado.value = false
   }
 }
 
@@ -109,48 +116,59 @@ const nombreMes = (ym) => {
       <div class="h-8 bg-gray-200 rounded w-48"></div>
     </div>
     <div v-else-if="store.actual">
-      <div class="flex items-center gap-4 mb-6 flex-wrap">
+      <!-- Cabecera: nombre + estado -->
+      <div class="flex items-center gap-2 mb-3 flex-wrap">
         <RouterLink to="/pacientes" class="text-gray-400 hover:text-gray-600">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
         </RouterLink>
         <h1 class="text-2xl font-bold text-gray-900">{{ store.actual.nombre }}</h1>
-        <div class="ml-auto flex items-center gap-2">
-          <RouterLink
-            :to="`/sesiones/nueva?paciente=${store.actual.id}`"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-            Nueva sesión
-          </RouterLink>
-          <RouterLink
-            :to="`/pacientes/${store.actual.id}/informe`"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-300 text-sm rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-            Generar informe
-          </RouterLink>
-          <RouterLink :to="`/pacientes/${store.actual.id}/editar`" class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">
-            Editar
-          </RouterLink>
-          <!-- Botón borrar con confirmación -->
-          <template v-if="!confirmandoBorrar">
-            <button @click="confirmandoBorrar = true"
-              class="inline-flex items-center px-3 py-1.5 border border-red-300 text-red-600 text-sm rounded-lg hover:bg-red-50 transition-colors">
-              Borrar paciente
+        <span v-if="!store.actual.activo" class="text-sm bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">Inactivo</span>
+      </div>
+
+      <!-- Toolbar de acciones: 2 columnas en móvil, en línea a la derecha en desktop -->
+      <div class="grid grid-cols-2 sm:flex sm:flex-wrap sm:items-center sm:justify-end gap-2 mb-6">
+        <RouterLink
+          :to="`/sesiones/nueva?paciente=${store.actual.id}`"
+          class="flex justify-center items-center gap-1.5 px-3 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          Nueva sesión
+        </RouterLink>
+        <RouterLink
+          :to="`/pacientes/${store.actual.id}/informe`"
+          class="flex justify-center items-center gap-1.5 px-3 py-2 border border-gray-300 text-sm rounded-lg hover:bg-gray-50 transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          Generar informe
+        </RouterLink>
+        <RouterLink :to="`/pacientes/${store.actual.id}/editar`"
+          class="flex justify-center items-center px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors">
+          Editar
+        </RouterLink>
+
+        <!-- Inactivar / Reactivar -->
+        <template v-if="store.actual.activo">
+          <button v-if="!confirmandoInactivar" @click="confirmandoInactivar = true"
+            class="flex justify-center items-center px-3 py-2 border border-amber-300 text-amber-700 text-sm rounded-lg hover:bg-amber-50 transition-colors">
+            Inactivar
+          </button>
+          <div v-else class="col-span-2 sm:contents flex flex-wrap items-center justify-center gap-2">
+            <span class="text-sm text-amber-700 font-medium">¿Marcar inactivo?</span>
+            <button @click="inactivarPaciente" :disabled="cambiandoEstado"
+              class="flex justify-center items-center px-3 py-2 bg-amber-600 text-white text-sm rounded-lg hover:bg-amber-700 disabled:opacity-60 transition-colors">
+              {{ cambiandoEstado ? '...' : 'Sí, inactivar' }}
             </button>
-          </template>
-          <template v-else>
-            <span class="text-sm text-red-600 font-medium">¿Confirmar borrado?</span>
-            <button @click="borrarPaciente" :disabled="borrando"
-              class="inline-flex items-center px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 disabled:opacity-60 transition-colors">
-              {{ borrando ? 'Borrando...' : 'Sí, borrar' }}
-            </button>
-            <button @click="confirmandoBorrar = false"
-              class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm rounded-lg hover:bg-gray-50 transition-colors">
+            <button @click="confirmandoInactivar = false"
+              class="flex justify-center items-center px-3 py-2 border border-gray-300 text-sm rounded-lg hover:bg-gray-50 transition-colors">
               Cancelar
             </button>
-          </template>
-        </div>
+          </div>
+        </template>
+        <button v-else @click="reactivarPaciente" :disabled="cambiandoEstado"
+          class="flex justify-center items-center px-3 py-2 bg-teal-600 text-white text-sm rounded-lg hover:bg-teal-700 disabled:opacity-60 transition-colors">
+          {{ cambiandoEstado ? '...' : 'Reactivar' }}
+        </button>
+
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">

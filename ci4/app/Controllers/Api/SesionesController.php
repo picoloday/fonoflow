@@ -96,15 +96,32 @@ class SesionesController extends BaseApiController
         $id = $this->model->crear($data);
 
         // Si el paciente tenía sesiones canceladas pendientes de reprogramar,
-        // marcarlas como 'reprogramada' ahora que se ha creado la nueva.
+        // marcar como 'reprogramada' SOLO la más antigua (FIFO). Cada nueva
+        // sesión recupera una pendiente, no todas.
         if (!empty($data['paciente_id'])) {
-            $this->db->table('sesiones')
+            $masAntigua = $this->db->table('sesiones')
+                ->select('id')
                 ->where('paciente_id', (int) $data['paciente_id'])
                 ->where('estado', 'cancelada')
                 ->where('reprogramar', 1)
                 ->where('id !=', $id)
                 ->where('deleted_at IS NULL')
-                ->update(['estado' => 'reprogramada', 'reprogramar' => 0, 'sesion_reprogramada_id' => $id, 'precio' => 0]);
+                ->orderBy('fecha', 'ASC')
+                ->orderBy('hora_inicio', 'ASC')
+                ->orderBy('id', 'ASC')
+                ->limit(1)
+                ->get()->getRowArray();
+
+            if ($masAntigua) {
+                $this->db->table('sesiones')
+                    ->where('id', (int) $masAntigua['id'])
+                    ->update([
+                        'estado'                 => 'reprogramada',
+                        'reprogramar'            => 0,
+                        'sesion_reprogramada_id' => $id,
+                        'precio'                 => 0,
+                    ]);
+            }
         }
 
         return $this->created($this->model->obtener($id));

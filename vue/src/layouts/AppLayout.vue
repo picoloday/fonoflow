@@ -12,13 +12,19 @@ const nav = [
   { name: 'dashboard', label: 'Inicio',    path: '/' },
   { name: 'agenda',    label: 'Agenda',    path: '/agenda' },
   { name: 'pacientes', label: 'Pacientes', path: '/pacientes' },
+  { name: 'pacientes-inactivos', label: 'Inactivos', path: '/pacientes/inactivos' },
   { name: 'sesiones',  label: 'Facturación',  path: '/sesiones' },
   { name: 'festivos',    label: 'Festivos',     path: '/festivos' },
   { name: 'pendientes', label: 'Pendientes',   path: '/pendientes' },
 ]
 
-const isActive = (path) =>
-  path === '/' ? route.path === '/' : route.path.startsWith(path)
+const isActive = (item) => {
+  if (item.path === '/') return route.path === '/'
+  if (item.path === '/pacientes') {
+    return route.path.startsWith('/pacientes') && !route.path.startsWith('/pacientes/inactivos')
+  }
+  return route.path.startsWith(item.path)
+}
 
 function logout() {
   auth.logout()
@@ -52,7 +58,7 @@ function logout() {
               v-for="item in nav" :key="item.name"
               :to="item.path"
               class="px-3 py-4 text-sm font-medium border-b-2 transition-colors"
-              :class="isActive(item.path)
+              :class="isActive(item)
                 ? 'border-teal-600 text-teal-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
             >
@@ -87,7 +93,7 @@ function logout() {
             :to="item.path"
             @click="menuOpen = false"
             class="block px-3 py-2 rounded-lg text-sm font-medium"
-            :class="isActive(item.path)
+            :class="isActive(item)
               ? 'bg-teal-50 text-teal-600'
               : 'text-gray-600 hover:bg-gray-100'"
           >
