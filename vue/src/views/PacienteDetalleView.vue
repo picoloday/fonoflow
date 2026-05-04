@@ -147,7 +147,7 @@ const nombreMes = (ym) => {
         </RouterLink>
 
         <!-- Inactivar / Reactivar -->
-        <template v-if="store.actual.activo">
+        <template v-if="Number(store.actual.activo)">
           <button v-if="!confirmandoInactivar" @click="confirmandoInactivar = true"
             class="flex justify-center items-center px-3 py-2 border border-amber-300 text-amber-700 text-sm rounded-lg hover:bg-amber-50 transition-colors">
             Inactivar
