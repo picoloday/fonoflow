@@ -23,32 +23,50 @@ async function cargar() {
 
 const agenda = computed(() => store.agenda)
 
-// slots llega como array plano ordenado por _hora; agrupa por hora para mostrar juntas
-const sesionesDelDia = computed(() => {
-  const slots = agenda.value?.slots
-  if (!slots) return []
-  let items
-  if (!Array.isArray(slots)) {
-    items = Object.entries(slots)
-      .filter(([, c]) => c && c.paciente_nombre)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([hora, cita]) => ({ hora, cita }))
+// Genera todos los slots de 30 min del día, marcando cuáles tienen cita y cuáles están libres
+const slotsDelDia = computed(() => {
+  const d = new Date(fecha.value + 'T12:00:00')
+  const diaSemana = d.getDay() // 0=Dom, 6=Sáb
+
+  let inicioMin, finMin
+  if (diaSemana === 6) {
+    inicioMin = 9 * 60; finMin = 14 * 60
+  } else if (diaSemana === 0) {
+    return []
   } else {
-    items = slots
-      .filter(s => s && s.paciente_nombre)
-      .map(s => ({ hora: s._hora, cita: s }))
+    inicioMin = 15 * 60; finMin = 21 * 60
   }
-  // Agrupar por hora
-  const grupos = []
-  const idx = {}
+
+  const toHora = (min) => `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`
+
+  const rawSlots = agenda.value?.slots
+  const items = !rawSlots ? [] :
+    Array.isArray(rawSlots)
+      ? rawSlots.filter(s => s && s.paciente_nombre).map(s => ({ hora: s._hora, cita: s }))
+      : Object.entries(rawSlots).filter(([, c]) => c && c.paciente_nombre).map(([hora, cita]) => ({ hora, cita }))
+
+  const apptMap = new Map()
   for (const { hora, cita } of items) {
-    if (idx[hora] === undefined) {
-      idx[hora] = grupos.length
-      grupos.push({ hora, citas: [] })
-    }
-    grupos[idx[hora]].citas.push(cita)
+    if (!apptMap.has(hora)) apptMap.set(hora, [])
+    apptMap.get(hora).push(cita)
   }
-  return grupos
+
+  const result = []
+  let skipUntilMin = -1
+
+  for (let min = inicioMin; min < finMin; min += 30) {
+    if (min < skipUntilMin) continue
+    const hora = toHora(min)
+    const citas = apptMap.get(hora) || []
+    if (citas.length > 0) {
+      const maxDuracion = Math.max(...citas.map(c => parseInt(c.duracion) || 30))
+      skipUntilMin = min + maxDuracion
+      result.push({ hora, citas, empty: false })
+    } else {
+      result.push({ hora, citas: [], empty: true })
+    }
+  }
+  return result
 })
 
 function cardColor(cita) {
@@ -218,33 +236,44 @@ const mesNombre = computed(() => {
           </div>
         </div>
 
-        <div v-else-if="sesionesDelDia.length" class="divide-y divide-gray-100 max-h-[600px] overflow-y-auto">
-          <div v-for="{ hora, citas } in sesionesDelDia" :key="hora" class="flex gap-3 px-5 py-2 items-start">
+        <div v-else-if="slotsDelDia.length" class="divide-y divide-gray-100 max-h-[600px] overflow-y-auto">
+          <div v-for="{ hora, citas, empty } in slotsDelDia" :key="hora" class="flex gap-3 px-5 py-2 items-start">
             <span class="text-sm text-gray-400 font-mono w-11 flex-shrink-0 pt-3">{{ hora }}</span>
             <div class="flex-1 flex flex-col gap-2">
-              <RouterLink
-                v-for="cita in citas" :key="cita.id"
-                :to="cita._tipo === 'sesion' ? `/sesiones/${cita.id}` : `/citas/${cita.id}`"
-                class="block rounded-lg px-4 text-sm transition-colors hover:opacity-90"
-                :class="[cardColor(cita), parseInt(cita.duracion) >= 60 ? 'py-5' : 'py-2.5']"
-              >
-                <div class="flex items-center justify-between">
-                  <p class="font-semibold text-gray-900">{{ cita.paciente_nombre }}</p>
-                  <div class="flex flex-col items-end gap-0.5 ml-2 shrink-0">
-                    <span class="text-sm px-2 py-0.5 rounded-full font-medium" :class="badgeColor(cita)">
-                      {{ labelCita(cita) }}
-                    </span>
-                    <span v-if="cita._recuperacion || cita.recuperacion" class="text-sm px-2 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700">
-                      Recuperación{{ cita._recuperacion_fecha ? ` · ${formatFechaCorta(cita._recuperacion_fecha)}` : '' }}
-                    </span>
+              <template v-if="!empty">
+                <RouterLink
+                  v-for="cita in citas" :key="cita.id"
+                  :to="cita._tipo === 'sesion' ? `/sesiones/${cita.id}` : `/citas/${cita.id}`"
+                  class="block rounded-lg px-4 text-sm transition-colors hover:opacity-90"
+                  :class="[cardColor(cita), parseInt(cita.duracion) >= 60 ? 'py-5' : 'py-2.5']"
+                >
+                  <div class="flex items-center justify-between">
+                    <p class="font-semibold text-gray-900">{{ cita.paciente_nombre }}</p>
+                    <div class="flex flex-col items-end gap-0.5 ml-2 shrink-0">
+                      <span class="text-sm px-2 py-0.5 rounded-full font-medium" :class="badgeColor(cita)">
+                        {{ labelCita(cita) }}
+                      </span>
+                      <span v-if="cita._recuperacion || cita.recuperacion" class="text-sm px-2 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700">
+                        Recuperación{{ cita._recuperacion_fecha ? ` · ${formatFechaCorta(cita._recuperacion_fecha)}` : '' }}
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <p v-if="cita.patologias" class="text-sm text-gray-500 mt-0.5 truncate">{{ cita.patologias }}</p>
-                <p class="text-sm text-gray-400 mt-0.5">{{ cita.duracion }} min</p>
-                <p v-if="cita.estado === 'cancelada'" class="text-xs mt-0.5 font-medium"
-                  :class="cita.reprogramar ? 'text-amber-600' : 'text-gray-400'">
-                  {{ cita.reprogramar ? 'Reprogramar' : 'No reprogramar' }}
-                </p>
+                  <p v-if="cita.patologias" class="text-sm text-gray-500 mt-0.5 truncate">{{ cita.patologias }}</p>
+                  <p class="text-sm text-gray-400 mt-0.5">{{ cita.duracion }} min</p>
+                  <p v-if="cita.estado === 'cancelada'" class="text-xs mt-0.5 font-medium"
+                    :class="cita.reprogramar ? 'text-amber-600' : 'text-gray-400'">
+                    {{ cita.reprogramar ? 'Reprogramar' : 'No reprogramar' }}
+                  </p>
+                </RouterLink>
+              </template>
+              <RouterLink v-else
+                :to="`/sesiones/nueva?fecha=${fecha}&hora=${hora}`"
+                class="flex items-center gap-2 rounded-lg border-2 border-dashed border-gray-200 px-4 py-2.5 text-sm text-gray-400 hover:border-teal-300 hover:text-teal-600 hover:bg-teal-50 transition-colors"
+              >
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                </svg>
+                <span>Disponible · Nueva sesión</span>
               </RouterLink>
             </div>
           </div>
