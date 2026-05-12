@@ -1,0 +1,39 @@
+{
+  "locale": "es-ES",
+  "words": [
+    {
+      "id": "pantalon",
+      "syllableCount": 3,
+      "cardColor": "#6c5ce7",
+      "ttsWord": "pantalón",
+      "ttsSyllables": ["pan", "ta", "lón"],
+      "audioWord": "/assets/audio/pantalon/word.mp3",
+      "syllableAudios": [
+        "/assets/audio/pantalon/syl_0.mp3",
+        "/assets/audio/pantalon/syl_1.mp3",
+        "/assets/audio/pantalon/syl_2.mp3"
+      ],
+      "audioSuccess": "/assets/audio/shared/genial.mp3"
+    },
+    {
+      "id": "mesa",
+      "syllableCount": 2,
+      "cardColor": "#00b894",
+      "ttsWord": "mesa",
+      "ttsSyllables": ["me", "sa"],
+      "audioWord": "/assets/audio/mesa/word.mp3",
+      "syllableAudios": ["/assets/audio/mesa/syl_0.mp3", "/assets/audio/mesa/syl_1.mp3"],
+      "audioSuccess": "/assets/audio/shared/genial.mp3"
+    },
+    {
+      "id": "sol",
+      "syllableCount": 1,
+      "cardColor": "#fdcb6e",
+      "ttsWord": "sol",
+      "ttsSyllables": ["sol"],
+      "audioWord": "/assets/audio/sol/word.mp3",
+      "syllableAudios": ["/assets/audio/sol/syl_0.mp3"],
+      "audioSuccess": "/assets/audio/shared/genial.mp3"
+    }
+  ]
+}

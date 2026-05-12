@@ -1,0 +1,19 @@
+PALABRAS HABLADAS (MP3)
+=======================
+
+Phaser no "lee" el español: hace falta un archivo de audio por cada palabra
+y, si quieres, uno por cada sílaba para el feedback al equivocarse.
+
+1) Generación automática (recomendado, misma voz que en silabas/tools)
+   - Instala: pip install edge-tts
+   - En la raíz de este proyecto: npm run generate-audio
+   - Crea los MP3 en public/assets/audio/ según public/content/words.json
+
+2) A mano
+   - Graba o exporta MP3 y colócalos en las rutas indicadas en words.json
+   - Rutas que empiezan por /assets/... son archivos dentro de public/
+
+Campos en words.json:
+  audioWord      → palabra completa
+  syllableAudios → una pista por sílaba, en orden
+  audioSuccess   → refuerzo (ej. "¡Genial!") — puede ser un solo MP3 compartido
