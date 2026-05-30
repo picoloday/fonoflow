@@ -27,6 +27,7 @@ export default defineConfig({
         ],
       },
       workbox: {
+        navigateFallbackDenylist: [/^\/games\//],
         runtimeCaching: [
           {
             urlPattern: /\/api\/v1\/.*/,
