@@ -55,13 +55,14 @@ const slotsDelDia = computed(() => {
   let skipUntilMin = -1
 
   for (let min = inicioMin; min < finMin; min += 30) {
-    if (min < skipUntilMin) continue
     const hora = toHora(min)
     const citas = apptMap.get(hora) || []
     if (citas.length > 0) {
       const maxDuracion = Math.max(...citas.map(c => parseInt(c.duracion) || 30))
       skipUntilMin = min + maxDuracion
       result.push({ hora, citas, empty: false })
+    } else if (min < skipUntilMin) {
+      continue
     } else {
       result.push({ hora, citas: [], empty: true })
     }
