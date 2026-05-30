@@ -16,6 +16,7 @@ const nav = [
   { name: 'sesiones',  label: 'Facturación',  path: '/sesiones' },
   { name: 'festivos',    label: 'Festivos',     path: '/festivos' },
   { name: 'pendientes', label: 'Pendientes',   path: '/pendientes' },
+  { name: 'juegos',     label: 'Juegos',       path: '/juegos' },
 ]
 
 const isActive = (item) => {

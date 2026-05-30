@@ -4,6 +4,9 @@ RewriteEngine On
 # 1. Primero: rutas /api/* → gateway CI4
 RewriteRule ^api/ api/index.php [L,QSA]
 
+# 1b. Juegos estáticos → servir directamente sin pasar por Vue
+RewriteRule ^games/ - [L]
+
 # 2. Archivos y directorios estáticos reales → servir tal cual
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d

@@ -177,7 +177,7 @@ class MenuScene extends Phaser.Scene {
     emojis.forEach((e, i) => {
       const x = (w / (emojis.length + 1)) * (i + 1);
       const y = h * 0.4;
-      const t = this.add.text(x, y, e, { fontSize: '64px' }).setOrigin(0.5);
+      const t = this.add.text(x, y, e, { fontSize: '64px', padding: { top: 10, bottom: 2 } }).setOrigin(0.5);
       this.tweens.add({
         targets: t,
         y: y - 18,
@@ -303,7 +303,7 @@ class GameScene extends Phaser.Scene {
     data.syllables.forEach(s => preloadAudio(s, 'syl'));
 
     // Emoji
-    const emoji = this.add.text(w / 2, h * 0.22, data.emoji, { fontSize: '120px' }).setOrigin(0.5);
+    const emoji = this.add.text(w / 2, h * 0.22, data.emoji, { fontSize: '120px', padding: { top: 20, bottom: 4 } }).setOrigin(0.5);
     this.wordGroup.add(emoji);
     this.tweens.add({
       targets: emoji,
@@ -605,6 +605,7 @@ class ResultScene extends Phaser.Scene {
       const s = this.add.text(w / 2 - 110 + i * 110, h * 0.4, filled ? '⭐' : '☆', {
         fontSize: '90px',
         color: filled ? '#fdcb6e' : '#636e72',
+        padding: { top: 16, bottom: 4 },
       }).setOrigin(0.5).setScale(0);
       this.tweens.add({
         targets: s,

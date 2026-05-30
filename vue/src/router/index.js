@@ -28,6 +28,7 @@ const routes = [
       { path: 'citas/:id',              name: 'cita-detalle',     component: () => import('@/views/CitaDetalleView.vue') },
       { path: 'festivos',               name: 'festivos',         component: () => import('@/views/FestivosView.vue') },
       { path: 'pendientes',             name: 'pendientes',       component: () => import('@/views/PendientesReprogramarView.vue') },
+      { path: 'juegos',                 name: 'juegos',           component: () => import('@/views/JuegosView.vue') },
     ],
   },
 ]
