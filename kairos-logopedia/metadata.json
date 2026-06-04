@@ -1,0 +1,6 @@
+{
+  "name": "Kairos Logopedia",
+  "description": "Plataforma web profesional para Kairos Logopedia. Servicios de logopedia infantil y de adultos, información sobre el equipo y sistema de solicitud de cita.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
