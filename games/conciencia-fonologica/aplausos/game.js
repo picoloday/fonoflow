@@ -121,6 +121,19 @@ function paintGradientBackground(scene) {
   }
 }
 
+function addOrientationRestart(scene) {
+  scene._portrait = scene.scale.height > scene.scale.width;
+  const handler = () => {
+    const portrait = scene.scale.height > scene.scale.width;
+    if (portrait !== scene._portrait) {
+      scene._portrait = portrait;
+      scene.scene.restart();
+    }
+  };
+  scene.scale.on('resize', handler);
+  scene.events.once('shutdown', () => scene.scale.off('resize', handler));
+}
+
 // =========================================================
 // MENU SCENE
 // =========================================================
@@ -173,6 +186,7 @@ class MenuScene extends Phaser.Scene {
       'Escucha la palabra y toca el número de sílabas correcto',
       { fontSize: '16px', color: '#dfe6e9' }
     ).setOrigin(0.5, 1);
+    addOrientationRestart(this);
   }
 
   makeButton(x, y, w, h, color, label, sub) {
@@ -231,6 +245,7 @@ class GameScene extends Phaser.Scene {
 
     this.updateHud();
     this.startWord();
+    addOrientationRestart(this);
   }
 
   updateHud() {
@@ -515,6 +530,7 @@ class ResultScene extends Phaser.Scene {
     menu.on('pointerup', () => this.scene.start('MenuScene'));
 
     this.time.delayedCall(900, () => speak(stars === 3 ? '¡perfecto, increíble!' : '¡muy bien!'));
+    addOrientationRestart(this);
   }
 
   makeBtn(x, y, w, h, color, label) {
@@ -540,13 +556,12 @@ class ResultScene extends Phaser.Scene {
 // =========================================================
 const config = {
   type: Phaser.AUTO,
-  width: 1280,
-  height: 800,
+  width: window.innerWidth,
+  height: window.innerHeight,
   parent: 'game',
   backgroundColor: '#0f0c29',
   scale: {
-    mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH,
+    mode: Phaser.Scale.RESIZE,
   },
   scene: [MenuScene, GameScene, ResultScene],
 };

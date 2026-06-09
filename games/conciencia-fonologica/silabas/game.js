@@ -656,13 +656,12 @@ class ResultScene extends Phaser.Scene {
 // =========================================================
 const config = {
   type: Phaser.AUTO,
-  width: 1280,
-  height: 800,
+  width: window.innerWidth,
+  height: window.innerHeight,
   parent: 'game',
   backgroundColor: '#0f0c29',
   scale: {
-    mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH,
+    mode: Phaser.Scale.RESIZE,
   },
   scene: [MenuScene, GameScene, ResultScene],
 };

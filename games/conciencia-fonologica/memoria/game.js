@@ -110,6 +110,19 @@ function paintGradientBackground(scene) {
   }
 }
 
+function addOrientationRestart(scene) {
+  scene._portrait = scene.scale.height > scene.scale.width;
+  const handler = () => {
+    const portrait = scene.scale.height > scene.scale.width;
+    if (portrait !== scene._portrait) {
+      scene._portrait = portrait;
+      scene.scene.restart();
+    }
+  };
+  scene.scale.on('resize', handler);
+  scene.events.once('shutdown', () => scene.scale.off('resize', handler));
+}
+
 // ─── MENU SCENE ───────────────────────────────────────────────────────────────
 class MenuScene extends Phaser.Scene {
   constructor() { super('MenuScene'); }
@@ -155,6 +168,7 @@ class MenuScene extends Phaser.Scene {
       const btn = this.makeBtn(w / 2, l.y, 380, 76, l.color, l.label, l.sub);
       btn.on('pointerup', () => this.scene.start('GameScene', { level: l.key }));
     });
+    addOrientationRestart(this);
   }
 
   makeBtn(x, y, w, h, color, label, sub) {
@@ -204,6 +218,7 @@ class GameScene extends Phaser.Scene {
 
     this.buildGrid();
     this.updateHud();
+    addOrientationRestart(this);
   }
 
   updateHud() {
@@ -519,6 +534,7 @@ class ResultScene extends Phaser.Scene {
       .on('pointerup', () => this.scene.start('MenuScene'));
 
     this.time.delayedCall(900, () => speak(stars === 3 ? '¡perfecto, increíble!' : '¡muy bien!', 'word'));
+    addOrientationRestart(this);
   }
 
   makeBtn(x, y, w, h, color, label) {
@@ -537,10 +553,10 @@ class ResultScene extends Phaser.Scene {
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 new Phaser.Game({
   type: Phaser.AUTO,
-  width: 1280,
-  height: 800,
+  width: window.innerWidth,
+  height: window.innerHeight,
   parent: 'game',
   backgroundColor: '#0f0c29',
-  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+  scale: { mode: Phaser.Scale.RESIZE },
   scene: [MenuScene, GameScene, ResultScene],
 });
